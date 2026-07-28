@@ -7,7 +7,7 @@ import {
   Search,
 } from "lucide-react";
 
-import logo from "../assets/ritual-logo.jpg";
+import logo from "../assets/ritual-logo.png";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
