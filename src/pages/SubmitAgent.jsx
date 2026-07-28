@@ -1,225 +1,394 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Upload,
+  Sparkles,
+  Send,
+} from "lucide-react";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-
-import ProgressStepper from "../components/submit/ProgressStepper";
-import BasicInfoStep from "../components/submit/BasicInfoStep";
-import LinksStep from "../components/submit/LinksStep";
-import MediaStep from "../components/submit/MediaStep";
-import ReviewStep from "../components/submit/ReviewStep";
-
 import { supabase } from "../services/supabase";
 
 export default function SubmitAgent() {
   const navigate = useNavigate();
 
-  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-
-  const [logoFile, setLogoFile] = useState(null);
-  const [bannerFile, setBannerFile] = useState(null);
-
-  const [logoPreview, setLogoPreview] = useState("");
-  const [bannerPreview, setBannerPreview] = useState("");
 
   const [form, setForm] = useState({
     name: "",
     description: "",
-    category: "",
-    type: "dApp",
+    category: "AI",
+    type: "Project",
     builder: "",
     website: "",
     github: "",
     documentation: "",
     twitter: "",
     discord: "",
+    logo: "",
+    image: "",
     tags: "",
+    status: "Active",
+    launch_date: "",
   });
 
   function handleChange(e) {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   }
 
-  function handleLogo(e) {
-    const file = e.target.files?.[0];
+  async function handleSubmit(e) {
+    e.preventDefault();
 
-    if (!file) return;
-
-    setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
-  }
-
-  function handleBanner(e) {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    setBannerFile(file);
-    setBannerPreview(URL.createObjectURL(file));
-  }
-
-  async function uploadImage(file) {
-    if (!file) return "";
-
-    const filename = `${Date.now()}-${file.name}`;
-
-    const { error } = await supabase.storage
-      .from("project-images")
-      .upload(filename, file);
-
-    if (error) throw error;
-
-    const { data } = supabase.storage
-      .from("project-images")
-      .getPublicUrl(filename);
-
-    return data.publicUrl;
-  }
-
-  async function handleSubmit() {
-    try {
-      setLoading(true);
-
-      const logo = await uploadImage(logoFile);
-      const image = await uploadImage(bannerFile);
-
-      const { error } = await supabase
-        .from("Projects")
-        .insert([
-          {
-            ...form,
-            logo,
-            image,
-            status: "pending",
-            featured: false,
-            verified: false,
-          },
-        ]);
-
-      if (error) throw error;
-
-      alert("Project submitted successfully!");
-
-      navigate("/");
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
+    if (!form.name.trim()) {
+      alert("Project name is required.");
+      return;
     }
-  }
 
-  function nextStep() {
-    if (step < 4) {
-      setStep(step + 1);
+    if (!form.description.trim()) {
+      alert("Description is required.");
+      return;
     }
-  }
+    const {
+  data: { user },
+} = await supabase.auth.getUser();
 
-  function previousStep() {
-    if (step > 1) {
-      setStep(step - 1);
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from("Projects")
+      .insert([
+  {
+    ...form,
+    owner_id: user.id,
+    featured: false,
+    verified: false,
+    likes: 0,
+    views: 0,
+  },
+])
+      .select()
+      .single();
+
+    setLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
     }
+
+    alert("Project submitted successfully!");
+
+    navigate(`/project/${data.id}`);
   }
-
-  return (
-    <div className="min-h-screen bg-[#09090B] text-white">
-
+    return (
+    <>
       <Navbar />
 
-      <main className="mx-auto max-w-5xl px-6 py-16">
+      <main className="min-h-screen bg-[#09090B]">
 
-        <div className="mb-10">
+        {/* Hero */}
 
-          <h1 className="text-5xl font-black">
-            Submit Your Project
-          </h1>
+        <section className="border-b border-zinc-800 bg-gradient-to-b from-emerald-500/10 to-transparent">
 
-          <p className="mt-3 text-zinc-400">
-            Showcase your project in the Ritual ecosystem directory.
-          </p>
+          <div className="mx-auto max-w-7xl px-6 py-16">
 
-        </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-400">
+              <Sparkles size={16} />
+              Build the Ritual Ecosystem
+            </div>
 
-        <ProgressStepper currentStep={step} />
+            <h1 className="mt-6 text-5xl font-black text-white">
+              Submit Your Project
+            </h1>
 
-        <div className="rounded-[32px] border border-zinc-800 bg-zinc-900 p-8">
+            <p className="mt-4 max-w-2xl text-lg text-zinc-400">
+              Share your project with the Ritual community. Add details,
+              links, and help builders discover your work.
+            </p>
 
-          {step === 1 && (
-            <BasicInfoStep
-              form={form}
-              handleChange={handleChange}
-            />
-          )}
+          </div>
 
-          {step === 2 && (
-            <LinksStep
-              form={form}
-              handleChange={handleChange}
-            />
-          )}
+        </section>
 
-          {step === 3 && (
-            <MediaStep
-              logoPreview={logoPreview}
-              bannerPreview={bannerPreview}
-              handleLogo={handleLogo}
-              handleBanner={handleBanner}
-            />
-          )}
+        <section className="mx-auto max-w-7xl px-6 py-12">
 
-          {step === 4 && (
-            <ReviewStep
-              form={form}
-              logoPreview={logoPreview}
-              bannerPreview={bannerPreview}
-            />
-          )}
-                    <div className="mt-12 flex flex-col gap-4 border-t border-zinc-800 pt-8 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid gap-10 lg:grid-cols-3">
 
-            <button
-              type="button"
-              onClick={previousStep}
-              disabled={step === 1}
-              className="rounded-2xl border border-zinc-700 px-6 py-3 font-semibold transition hover:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
+            {/* Form */}
+
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-6 lg:col-span-2 rounded-3xl border border-zinc-800 bg-zinc-900/60 p-8 backdrop-blur-xl"
             >
-              Previous
-            </button>
 
-            <div className="flex gap-4">
+              <div>
+                <label className="mb-2 block text-sm text-zinc-400">
+                  Project Name *
+                </label>
 
-              {step < 4 ? (
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  className="rounded-2xl bg-emerald-500 px-8 py-3 font-semibold text-black transition hover:bg-emerald-400"
-                >
-                  Continue
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="rounded-2xl bg-emerald-500 px-8 py-3 font-semibold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {loading ? "Submitting..." : "Submit Project"}
-                </button>
-              )}
+                <input
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none focus:border-emerald-500"
+                  placeholder="Ritual Studio"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm text-zinc-400">
+                  Description *
+                </label>
+
+                <textarea
+                  rows={5}
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none focus:border-emerald-500"
+                  placeholder="Describe your project..."
+                />
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+
+                <div>
+                  <label className="mb-2 block text-sm text-zinc-400">
+                    Category
+                  </label>
+
+                  <select
+                    name="category"
+                    value={form.category}
+                    onChange={handleChange}
+                    className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                  >
+                    <option>AI</option>
+                    <option>Agent</option>
+                    <option>Infrastructure</option>
+                    <option>Developer Tools</option>
+                    <option>Gaming</option>
+                    <option>DeFi</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm text-zinc-400">
+                    Type
+                  </label>
+
+                  <select
+                    name="type"
+                    value={form.type}
+                    onChange={handleChange}
+                    className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                  >
+                    <option>Project</option>
+                    <option>Protocol</option>
+                    <option>Tool</option>
+                    <option>Library</option>
+                    <option>Infrastructure</option>
+                  </select>
+                </div>
+
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm text-zinc-400">
+                  Builder
+                </label>
+
+                <input
+                  name="builder"
+                  value={form.builder}
+                  onChange={handleChange}
+                  className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none focus:border-emerald-500"
+                  placeholder="Your name or team"
+                />
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+
+                <input
+                  name="website"
+                  value={form.website}
+                  onChange={handleChange}
+                  placeholder="Website"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                />
+
+                <input
+                  name="github"
+                  value={form.github}
+                  onChange={handleChange}
+                  placeholder="GitHub"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                />
+
+                <input
+                  name="documentation"
+                  value={form.documentation}
+                  onChange={handleChange}
+                  placeholder="Documentation"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                />
+
+                <input
+                  name="twitter"
+                  value={form.twitter}
+                  onChange={handleChange}
+                  placeholder="Twitter / X"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                />
+
+                <input
+                  name="discord"
+                  value={form.discord}
+                  onChange={handleChange}
+                  placeholder="Discord"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                />
+
+              </div>
+                            <div className="grid gap-6 md:grid-cols-2">
+
+                <input
+                  name="logo"
+                  value={form.logo}
+                  onChange={handleChange}
+                  placeholder="Logo URL (optional)"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                />
+
+                <input
+                  name="image"
+                  value={form.image}
+                  onChange={handleChange}
+                  placeholder="Banner URL (optional)"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                />
+
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+
+                <input
+                  name="tags"
+                  value={form.tags}
+                  onChange={handleChange}
+                  placeholder="AI, Agent, DeFi"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                />
+
+                <input
+                  type="date"
+                  name="launch_date"
+                  value={form.launch_date}
+                  onChange={handleChange}
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                />
+
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 py-4 text-lg font-bold text-black transition hover:scale-[1.02] disabled:opacity-50"
+              >
+                {loading ? (
+                  "Submitting..."
+                ) : (
+                  <>
+                    <Send size={20} />
+                    Submit Project
+                  </>
+                )}
+              </button>
+
+            </form>
+
+            {/* Live Preview */}
+
+            <div className="lg:sticky lg:top-24">
+
+              <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-xl">
+
+                <div className="h-40 bg-gradient-to-br from-emerald-500/20 via-cyan-500/10 to-zinc-900">
+                  {form.image && (
+                    <img
+                      src={form.image}
+                      alt="Banner"
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </div>
+
+                <div className="p-6">
+
+                  {form.logo ? (
+                    <img
+                      src={form.logo}
+                      alt="Logo"
+                      className="h-20 w-20 rounded-2xl border border-zinc-700 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-emerald-500 text-3xl font-bold text-black">
+                      {form.name?.charAt(0) || "R"}
+                    </div>
+                  )}
+
+                  <h2 className="mt-5 text-2xl font-bold text-white">
+                    {form.name || "Project Name"}
+                  </h2>
+
+                  <p className="mt-2 text-sm text-emerald-400">
+                    {form.builder || "Builder"}
+                  </p>
+
+                  <p className="mt-4 text-sm leading-7 text-zinc-400">
+                    {form.description ||
+                      "Your project description will appear here."}
+                  </p>
+
+                  {form.tags && (
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {form.tags
+                        .split(",")
+                        .map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-300"
+                          >
+                            {tag.trim()}
+                          </span>
+                        ))}
+                    </div>
+                  )}
+
+                  <div className="mt-6 flex items-center gap-2 text-sm text-zinc-500">
+                    <Upload size={16} />
+                    Live Preview
+                  </div>
+
+                </div>
+
+              </div>
 
             </div>
 
           </div>
 
-        </div>
+        </section>
 
       </main>
 
       <Footer />
-
-    </div>
+    </>
   );
 }

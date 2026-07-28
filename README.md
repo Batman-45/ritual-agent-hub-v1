@@ -1,16 +1,93 @@
-# React + Vite
+# Ritual Agent Hub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A community-driven ecosystem directory for discovering, showcasing, and exploring projects built on the Ritual ecosystem.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Overview
 
-## React Compiler
+Ritual Agent Hub helps developers and users discover AI projects, autonomous agents, infrastructure, developer tools, and applications built on Ritual.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Instead of searching across multiple platforms, everything is available in one place.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Features
+
+- User Authentication
+- Submit New Projects
+- Admin Approval Workflow
+- Featured Projects
+- Project Categories
+- Search Projects
+- Project Details Page
+- Personal Dashboard
+- Admin Dashboard
+- Responsive Design
+
+---
+
+## Tech Stack
+
+Frontend
+- React
+- Vite
+- Tailwind CSS
+
+Backend
+- Supabase
+
+Authentication
+- Supabase Auth
+
+Database
+- Supabase PostgreSQL
+
+Icons
+- Lucide React
+
+Deployment
+- Vercel
+
+---
+
+## Screenshots
+
+(Add screenshots after deployment)
+
+---
+
+## Future Roadmap
+
+- Image Uploads
+- Builder Profiles
+- Project Analytics
+- Project Reviews
+- AI Project Recommendations
+- API Access
+
+---
+
+## Local Setup
+
+```bash
+git clone <repository-url>
+
+cd ritual-agent-hub
+
+npm install
+
+npm run dev
+```
+
+---
+
+## Why Ritual Agent Hub?
+
+As the Ritual ecosystem grows, discovering quality projects becomes increasingly difficult.
+
+Ritual Agent Hub provides a single platform where builders can showcase their work and users can easily explore the ecosystem.
+
+---
+
+Built with ❤️ for the Ritual Ecosystem.

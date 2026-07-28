@@ -3,10 +3,11 @@ import { Link, NavLink } from "react-router-dom";
 import {
   Menu,
   X,
-  Sparkles,
   Plus,
   Search,
 } from "lucide-react";
+
+import logo from "../assets/ritual-logo.jpg";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -36,17 +37,19 @@ export default function Navbar() {
           to="/"
           className="flex items-center gap-4"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-400 shadow-lg shadow-emerald-500/30">
-            <Sparkles className="text-black" size={22} />
-          </div>
+          <img
+            src={logo}
+            alt="Ritual Logo"
+            className="h-12 w-12 rounded-xl object-contain"
+          />
 
           <div>
             <h1 className="text-xl font-bold tracking-tight text-white">
-              Ritual Directory
+              Ritual Agent Hub
             </h1>
 
-            <p className="text-xs text-zinc-500">
-              Discover AI Projects
+            <p className="text-xs text-emerald-400">
+              Built for the Ritual Ecosystem
             </p>
           </div>
         </Link>
@@ -75,9 +78,7 @@ export default function Navbar() {
 
         <div className="hidden items-center gap-4 md:flex">
 
-          <button
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 transition hover:border-emerald-500"
-          >
+          <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 transition hover:border-emerald-500">
             <Search size={18} />
           </button>
 
@@ -91,13 +92,13 @@ export default function Navbar() {
 
         </div>
 
-        {/* Mobile */}
+        {/* Mobile Button */}
 
         <button
           onClick={() => setOpen(!open)}
           className="rounded-xl border border-zinc-800 bg-zinc-900 p-2 md:hidden"
         >
-          {open ? <X /> : <Menu />}
+          {open ? <X size={22} /> : <Menu size={22} />}
         </button>
 
       </div>
@@ -133,7 +134,6 @@ export default function Navbar() {
 
         </div>
       )}
-
     </header>
   );
 }

@@ -1,25 +1,53 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
-  Globe,
-  ExternalLink,
   Eye,
-  Calendar,
-  User,
-  CheckCircle,
+  Heart,
+  Globe,
+  GitBranch,
+  BookOpen,
+  MessageCircle,
+  CheckCircle2,
   Star,
+  Calendar,
   Package,
 } from "lucide-react";
+
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import ProjectCard from "../components/ProjectCard";
 import { supabase } from "../services/supabase";
+
+function formatNumber(num = 0) {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+  return num.toString();
+}
 
 export default function ProjectDetails() {
   const { id } = useParams();
 
   const [project, setProject] = useState(null);
+  const [relatedProjects, setRelatedProjects] = useState([]);
+
   const [loading, setLoading] = useState(true);
+
+  const [likes, setLikes] = useState(0);
+  const [views, setViews] = useState(0);
+
+  const [liking, setLiking] = useState(false);
+
+  const tags = useMemo(() => {
+    if (!project?.tags) return [];
+
+    if (Array.isArray(project.tags)) return project.tags;
+
+    return project.tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+  }, [project]);
 
   useEffect(() => {
     loadProject();
@@ -34,313 +62,387 @@ export default function ProjectDetails() {
       .eq("id", id)
       .single();
 
-    if (!error && data) {
-      const newViews = (data.views || 0) + 1;
-
-      await supabase
-        .from("Projects")
-        .update({
-          views: newViews,
-        })
-        .eq("id", id);
-
-      setProject({
-        ...data,
-        views: newViews,
-      });
+    if (error || !data) {
+      setProject(null);
+      setLoading(false);
+      return;
     }
+
+    const newViews = (data.views || 0) + 1;
+
+    await supabase
+      .from("Projects")
+      .update({
+        views: newViews,
+      })
+      .eq("id", id);
+
+    data.views = newViews;
+
+    setViews(newViews);
+    setLikes(data.likes || 0);
+    setProject(data);
+
+    const { data: related } = await supabase
+      .from("Projects")
+      .select("*")
+      .eq("category", data.category)
+      .neq("id", data.id)
+      .limit(3);
+
+    setRelatedProjects(related || []);
 
     setLoading(false);
   }
 
-  if (loading) {
+  async function handleLike() {
+    if (liking) return;
+
+    setLiking(true);
+
+    const newLikes = likes + 1;
+
+    const { error } = await supabase
+      .from("Projects")
+      .update({
+        likes: newLikes,
+      })
+      .eq("id", id);
+
+    if (!error) {
+      setLikes(newLikes);
+    }
+
+    setLiking(false);
+  }
+    if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090B] text-white">
+      <>
         <Navbar />
-
-        <div className="mx-auto flex max-w-7xl items-center justify-center px-6 py-32">
-          <div className="w-full max-w-5xl animate-pulse space-y-6">
-
-            <div className="h-80 rounded-3xl bg-zinc-900" />
-
-            <div className="h-12 w-2/3 rounded-xl bg-zinc-900" />
-
-            <div className="h-6 w-1/2 rounded-xl bg-zinc-900" />
-
-            <div className="grid gap-6 md:grid-cols-3">
-              {[1,2,3].map((i)=>(
-                <div
-                  key={i}
-                  className="h-36 rounded-3xl bg-zinc-900"
-                />
-              ))}
+        <main className="min-h-screen bg-[#09090B]">
+          <div className="mx-auto max-w-7xl px-6 py-10">
+            <div className="animate-pulse">
+              <div className="h-80 rounded-3xl bg-zinc-800" />
+              <div className="mt-8 flex gap-6">
+                <div className="h-28 w-28 rounded-3xl bg-zinc-800" />
+                <div className="flex-1">
+                  <div className="h-10 w-72 rounded bg-zinc-800" />
+                  <div className="mt-4 h-5 w-40 rounded bg-zinc-800" />
+                  <div className="mt-6 h-20 rounded bg-zinc-800" />
+                </div>
+              </div>
             </div>
-
           </div>
-        </div>
-
+        </main>
         <Footer />
-      </div>
+      </>
     );
   }
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-[#09090B] text-white">
+      <>
         <Navbar />
 
-        <div className="flex h-[70vh] flex-col items-center justify-center">
+        <main className="flex min-h-screen items-center justify-center bg-[#09090B] px-6">
+          <div className="text-center">
+            <Package
+              size={72}
+              className="mx-auto text-zinc-600"
+            />
 
-          <Boxes
-            size={70}
-            className="mb-6 text-zinc-600"
-          />
+            <h1 className="mt-6 text-4xl font-bold">
+              Project Not Found
+            </h1>
 
-          <h1 className="text-4xl font-bold">
-            Project Not Found
-          </h1>
+            <p className="mt-3 text-zinc-400">
+              The requested project doesn't exist.
+            </p>
 
-          <p className="mt-4 text-zinc-500">
-            The requested project does not exist.
-          </p>
-
-          <Link
-            to="/"
-            className="mt-8 rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-black"
-          >
-            Go Home
-          </Link>
-
-        </div>
+            <Link
+              to="/"
+              className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3 font-semibold text-black transition hover:bg-emerald-400"
+            >
+              <ArrowLeft size={18} />
+              Back Home
+            </Link>
+          </div>
+        </main>
 
         <Footer />
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-white">
-
+    <>
       <Navbar />
 
-      {/* HERO */}
+      <main className="min-h-screen bg-[#09090B]">
 
-      <section className="relative overflow-hidden">
+        {/* Banner */}
 
-        <div className="absolute inset-0">
+        <section className="relative h-[360px] overflow-hidden">
 
-          <div className="absolute inset-0 bg-[#09090B]" />
+          {project.image ? (
+            <img
+              src={project.image}
+              alt={project.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-emerald-500/20 via-zinc-900 to-zinc-950" />
+          )}
 
-          <div className="absolute left-1/2 top-0 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-emerald-500/15 blur-[140px]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#09090B] via-[#09090B]/40 to-transparent" />
+        </section>
 
-        </div>
+        <section className="relative -mt-20 mx-auto max-w-7xl px-6">
 
-        <div className="relative mx-auto max-w-7xl px-6 py-14">
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-8 backdrop-blur-xl">
 
-          <Link
-            to="/"
-            className="mb-8 inline-flex items-center gap-2 text-zinc-400 transition hover:text-white"
-          >
-            <ArrowLeft size={18} />
-            Back to Projects
-          </Link>
+            <div className="flex flex-col gap-8 lg:flex-row">
 
-          <div className="overflow-hidden rounded-[32px] border border-zinc-800 bg-zinc-900">
+              {/* Logo */}
 
-            {project.image ? (
-              <img
-                src={project.image}
-                alt={project.name}
-                className="h-[360px] w-full object-cover"
+              <div className="flex-shrink-0">
+                {project.logo ? (
+                  <img
+                    src={project.logo}
+                    alt={project.name}
+                    className="h-32 w-32 rounded-3xl border border-zinc-700 object-cover"
+                  />
+                ) : (
+                  <div className="flex h-32 w-32 items-center justify-center rounded-3xl bg-emerald-500 text-4xl font-bold text-black">
+                    {project.name?.charAt(0)}
+                  </div>
+                )}
+              </div>
+
+              {/* Info */}
+
+              <div className="flex-1">
+
+                <div className="flex flex-wrap items-center gap-3">
+
+                  <h1 className="text-4xl font-black">
+                    {project.name}
+                  </h1>
+
+                  {project.verified && (
+                    <span className="flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-sm font-semibold text-black">
+                      <CheckCircle2 size={16} />
+                      Verified
+                    </span>
+                  )}
+
+                  {project.featured && (
+                    <span className="flex items-center gap-1 rounded-full bg-yellow-500 px-3 py-1 text-sm font-semibold text-black">
+                      <Star size={16} />
+                      Featured
+                    </span>
+                  )}
+
+                </div>
+
+                <p className="mt-3 text-lg text-zinc-400">
+                  by {project.builder}
+                </p>
+
+                <p className="mt-6 max-w-4xl leading-8 text-zinc-300">
+                  {project.description}
+                </p>
+
+                {/* Tags */}
+
+                <div className="mt-6 flex flex-wrap gap-2">
+
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-zinc-800 px-4 py-2 text-sm text-zinc-300"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+
+                </div>
+                                {/* Action Buttons */}
+
+                <div className="mt-8 flex flex-wrap gap-3">
+
+                  {project.website && (
+                    <a
+                      href={project.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 font-semibold text-black transition hover:bg-emerald-400"
+                    >
+                      <Globe size={18} />
+                      Website
+                    </a>
+                  )}
+
+                  {project.github && (
+                    <a
+                      href={project.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3 transition hover:border-emerald-500"
+                    >
+                      <GitBranch size={18} />
+                      GitHub
+                    </a>
+                  )}
+
+                  {project.documentation && (
+                    <a
+                      href={project.documentation}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3 transition hover:border-emerald-500"
+                    >
+                      <BookOpen size={18} />
+                      Docs
+                    </a>
+                  )}
+
+                  {project.twitter && (
+                    <a
+                      href={project.twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3 transition hover:border-emerald-500"
+                    >
+                      𝕏
+                    </a>
+                  )}
+
+                  {project.discord && (
+                    <a
+                      href={project.discord}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3 transition hover:border-emerald-500"
+                    >
+                      <MessageCircle size={18} />
+                      Discord
+                    </a>
+                  )}
+
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* Statistics */}
+
+        <section className="mx-auto mt-10 max-w-7xl px-6">
+          <div className="grid gap-6 md:grid-cols-3">
+
+            <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6 backdrop-blur-xl">
+              <div className="flex items-center gap-3 text-zinc-400">
+                <Eye size={18} />
+                Views
+              </div>
+
+              <h3 className="mt-4 text-4xl font-black">
+                {formatNumber(views)}
+              </h3>
+            </div>
+
+            <button
+              onClick={handleLike}
+              className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6 text-left backdrop-blur-xl transition hover:border-red-500"
+            >
+              <div className="flex items-center gap-3 text-zinc-400">
+                <Heart size={18} />
+                Likes
+              </div>
+
+              <h3 className="mt-4 text-4xl font-black">
+                {formatNumber(likes)}
+              </h3>
+            </button>
+
+            <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6 backdrop-blur-xl">
+              <div className="flex items-center gap-3 text-zinc-400">
+                <Calendar size={18} />
+                Launch Date
+              </div>
+
+              <h3 className="mt-4 text-2xl font-bold">
+                {project.launch_date || "Coming Soon"}
+              </h3>
+            </div>
+
+          </div>
+        </section>
+
+        {/* Project Information */}
+
+        <section className="mx-auto mt-10 max-w-7xl px-6">
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-8 backdrop-blur-xl">
+
+            <h2 className="mb-6 text-2xl font-bold">
+              Project Information
+            </h2>
+
+            <div className="grid gap-6 md:grid-cols-2">
+
+              <InfoRow label="Category" value={project.category} />
+              <InfoRow label="Type" value={project.type} />
+              <InfoRow label="Status" value={project.status} />
+              <InfoRow label="Builder" value={project.builder} />
+              <InfoRow
+                label="Launch Date"
+                value={project.launch_date || "TBA"}
               />
-            ) : (
-              <div className="flex h-[360px] items-center justify-center bg-gradient-to-br from-emerald-500/20 to-black">
-                <Boxes
-                  size={90}
-                  className="text-emerald-400"
+
+            </div>
+
+          </div>
+        </section>
+
+        {/* Related Projects */}
+
+        {relatedProjects.length > 0 && (
+          <section className="mx-auto mt-16 max-w-7xl px-6">
+            <h2 className="mb-8 text-3xl font-bold">
+              Related Projects
+            </h2>
+
+            <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+              {relatedProjects.map((item) => (
+                <ProjectCard
+                  key={item.id}
+                  project={item}
                 />
-              </div>
-            )}
-
-            <div className="p-10">
-
-              <div className="flex flex-wrap items-center gap-3">
-
-                {project.category && (
-                  <span className="rounded-full bg-emerald-500/10 px-4 py-2 text-sm text-emerald-400">
-                    {project.category}
-                  </span>
-                )}
-
-                {project.type && (
-                  <span className="rounded-full bg-zinc-800 px-4 py-2 text-sm">
-                    {project.type}
-                  </span>
-                )}
-
-                {project.verified && (
-                  <span className="flex items-center gap-2 rounded-full bg-blue-500 px-4 py-2 text-sm font-medium">
-                    <CheckCircle size={16} />
-                    Verified
-                  </span>
-                )}
-
-                {project.featured && (
-                  <span className="flex items-center gap-2 rounded-full bg-yellow-400 px-4 py-2 text-sm font-medium text-black">
-                    <Star
-                      size={16}
-                      fill="currentColor"
-                    />
-                    Featured
-                  </span>
-                )}
-
-              </div>
-
-              <h1 className="mt-8 text-5xl font-black md:text-6xl">
-                {project.name}
-              </h1>
-
-              <p className="mt-6 max-w-4xl text-lg leading-8 text-zinc-400">
-                {project.description}
-              </p>
-                            <div className="mt-12 grid gap-6 md:grid-cols-3">
-
-                <div className="rounded-3xl border border-zinc-800 bg-black/30 p-6">
-                  <Eye className="mb-4 text-emerald-400" size={24} />
-                  <p className="text-sm text-zinc-500">Views</p>
-                  <p className="mt-2 text-3xl font-bold">
-                    {project.views || 0}
-                  </p>
-                </div>
-
-                <div className="rounded-3xl border border-zinc-800 bg-black/30 p-6">
-                  <User className="mb-4 text-emerald-400" size={24} />
-                  <p className="text-sm text-zinc-500">Builder</p>
-                  <p className="mt-2 text-lg font-semibold">
-                    {project.builder || "-"}
-                  </p>
-                </div>
-
-                <div className="rounded-3xl border border-zinc-800 bg-black/30 p-6">
-                  <Calendar className="mb-4 text-emerald-400" size={24} />
-                  <p className="text-sm text-zinc-500">Launch Date</p>
-                  <p className="mt-2 text-lg font-semibold">
-                    {project.launch_date || "-"}
-                  </p>
-                </div>
-
-              </div>
-
-              <div className="mt-12 flex flex-wrap gap-4">
-
-                {project.website && (
-                  <a
-                    href={project.website}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 font-semibold text-black transition hover:scale-105"
-                  >
-                    <Globe size={18} />
-                    Website
-                  </a>
-                )}
-
-                {project.github && (
-                  <a
-                    href={project.github}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-6 py-4 transition hover:border-emerald-500"
-                  >
-                    <ExternalLink size={18} />
-                    GitHub
-                  </a>
-                )}
-
-                {project.documentation && (
-                  <a
-                    href={project.documentation}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-6 py-4 transition hover:border-emerald-500"
-                  >
-                    <FileText size={18} />
-                    Documentation
-                  </a>
-                )}
-
-                {project.twitter && (
-                  <a
-                    href={project.twitter}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-6 py-4 transition hover:border-emerald-500"
-                  >
-                    <ExternalLink size={18} />
-                    X / Twitter
-                  </a>
-                )}
-
-              </div>
-
+              ))}
             </div>
-          </div>
+          </section>
+        )}
 
-          <div className="mt-12 grid gap-8 lg:grid-cols-2">
-
-            <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
-
-              <h2 className="mb-6 text-2xl font-bold">
-                Project Information
-              </h2>
-
-              <div className="space-y-5">
-
-                <div className="flex justify-between border-b border-zinc-800 pb-4">
-                  <span className="text-zinc-500">Status</span>
-                  <span>{project.status || "-"}</span>
-                </div>
-
-                <div className="flex justify-between border-b border-zinc-800 pb-4">
-                  <span className="text-zinc-500">Submitted By</span>
-                  <span>{project.submitted_by || "-"}</span>
-                </div>
-
-                <div className="flex justify-between border-b border-zinc-800 pb-4">
-                  <span className="text-zinc-500">Category</span>
-                  <span>{project.category || "-"}</span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Type</span>
-                  <span>{project.type || "-"}</span>
-                </div>
-
-              </div>
-
-            </div>
-
-            <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
-
-              <h2 className="mb-6 text-2xl font-bold">
-                About
-              </h2>
-
-              <p className="leading-8 text-zinc-400">
-                {project.description}
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
+      </main>
 
       <Footer />
+    </>
+  );
+}
 
+function InfoRow({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+      <p className="text-sm text-zinc-500">
+        {label}
+      </p>
+
+      <p className="mt-2 text-lg font-semibold text-white">
+        {value || "-"}
+      </p>
     </div>
   );
 }
