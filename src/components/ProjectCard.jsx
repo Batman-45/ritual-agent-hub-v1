@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Globe,
   MessageCircle,
@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   Star,
   GitBranch,
+  Trash2,
+  Pencil,
 } from "lucide-react";
 import { supabase } from "../services/supabase";
 
@@ -17,16 +19,20 @@ function formatNumber(num = 0) {
   return num.toString();
 }
 
-export default function ProjectCard({ project }) {
+export default function ProjectCard({ project, onEdit, onDelete }) {
+  const navigate = useNavigate();
+
   const [likes, setLikes] = useState(project.likes || 0);
   const [loading, setLoading] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+  const [bannerError, setBannerError] = useState(false);
 
   const likedKey = `project-liked-${project.id}`;
 
   const initials = useMemo(() => {
     return (project.name || "Project")
       .split(" ")
-      .map((word) => word[0])
+      .map((w) => w[0])
       .join("")
       .slice(0, 2)
       .toUpperCase();
@@ -34,7 +40,6 @@ export default function ProjectCard({ project }) {
 
   const tags = useMemo(() => {
     if (!project.tags) return [];
-
     if (Array.isArray(project.tags)) return project.tags;
 
     return project.tags
@@ -48,7 +53,6 @@ export default function ProjectCard({ project }) {
     e.stopPropagation();
 
     if (loading) return;
-
     if (localStorage.getItem(likedKey)) return;
 
     setLoading(true);
@@ -69,21 +73,18 @@ export default function ProjectCard({ project }) {
   }
 
   return (
-    <Link
-      to={`/project/${project.id}`}
-      className="group block overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/10"
+    <div
+      onClick={() => navigate(`/project/${project.id}`)}
+      className="group cursor-pointer overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/10"
     >
       {/* Banner */}
-
       <div className="relative h-48 overflow-hidden">
-        {project.image ? (
+        {project.image && !bannerError ? (
           <img
             src={project.image}
             alt={project.name}
             loading="lazy"
-            onError={(e) => {
-              e.target.style.display = "none";
-            }}
+            onError={() => setBannerError(true)}
             className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
           />
         ) : (
@@ -108,36 +109,40 @@ export default function ProjectCard({ project }) {
           )}
         </div>
       </div>
-            {/* Content */}
+
+      {/* Content */}
       <div className="p-6">
         <div className="flex items-start gap-4">
-          {/* Logo */}
-          {project.logo ? (
+          {project.logo && !logoError ? (
             <img
               src={project.logo}
               alt={project.name}
               loading="lazy"
-              onError={(e) => {
-                e.target.style.display = "none";
-              }}
+              onError={() => setLogoError(true)}
               className="h-16 w-16 rounded-2xl border border-zinc-700 bg-zinc-900 object-cover shadow-lg"
             />
           ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-lg font-bold text-black shadow-lg">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500 text-lg font-bold text-black shadow-lg">
               {initials}
             </div>
           )}
 
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-xl font-bold text-white transition group-hover:text-emerald-400">
+            <h2 className="truncate text-xl font-bold text-white group-hover:text-emerald-400">
               {project.name}
             </h2>
 
             <p className="mt-1 text-sm text-zinc-400">
               by{" "}
-              <span className="font-medium text-zinc-300">
-                {project.builder || "Unknown Builder"}
-              </span>
+              <span
+  onClick={(e) => {
+    e.stopPropagation();
+    navigate(`/builder/${encodeURIComponent(project.builder)}`);
+  }}
+  className="cursor-pointer font-medium text-emerald-400 hover:underline"
+>
+  {project.builder || "Unknown Builder"}
+</span>
             </p>
 
             <div className="mt-3">
@@ -148,13 +153,9 @@ export default function ProjectCard({ project }) {
           </div>
         </div>
 
-        {/* Description */}
-
         <p className="mt-5 line-clamp-3 text-sm leading-7 text-zinc-400">
           {project.description}
         </p>
-
-        {/* Tags */}
 
         {tags.length > 0 && (
           <div className="mt-5 flex flex-wrap gap-2">
@@ -175,8 +176,6 @@ export default function ProjectCard({ project }) {
           </div>
         )}
 
-        {/* Stats */}
-
         <div className="mt-6 flex items-center justify-between border-t border-zinc-800 pt-5">
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-2 text-sm text-zinc-400">
@@ -187,12 +186,9 @@ export default function ProjectCard({ project }) {
             <button
               onClick={handleLike}
               disabled={loading}
-              className="flex items-center gap-2 text-sm text-zinc-400 transition hover:scale-105 hover:text-red-400 active:scale-95 disabled:opacity-50"
+              className="flex items-center gap-2 text-sm text-zinc-400 hover:text-red-400"
             >
-              <Heart
-                size={16}
-                className={loading ? "animate-pulse" : ""}
-              />
+              <Heart size={16} />
               {formatNumber(likes)}
             </button>
           </div>
@@ -204,7 +200,7 @@ export default function ProjectCard({ project }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="rounded-xl border border-zinc-700 bg-zinc-800 p-2 transition hover:border-emerald-500 hover:bg-zinc-700"
+                className="rounded-xl border border-zinc-700 bg-zinc-800 p-2 hover:border-emerald-500"
               >
                 <Globe size={16} />
               </a>
@@ -216,7 +212,7 @@ export default function ProjectCard({ project }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="rounded-xl border border-zinc-700 bg-zinc-800 p-2 transition hover:border-emerald-500 hover:bg-zinc-700"
+                className="rounded-xl border border-zinc-700 bg-zinc-800 p-2 hover:border-emerald-500"
               >
                 <GitBranch size={16} />
               </a>
@@ -228,14 +224,40 @@ export default function ProjectCard({ project }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="rounded-xl border border-zinc-700 bg-zinc-800 p-2 transition hover:border-emerald-500 hover:bg-zinc-700"
+                className="rounded-xl border border-zinc-700 bg-zinc-800 p-2 hover:border-emerald-500"
               >
                 <MessageCircle size={16} />
               </a>
             )}
+
+            {onEdit && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onEdit();
+                }}
+                className="rounded-xl border border-emerald-500 bg-emerald-500/10 p-2 text-emerald-400 hover:bg-emerald-500 hover:text-white"
+              >
+                <Pencil size={16} />
+              </button>
+            )}
+
+            {onDelete && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="rounded-xl border border-red-500 bg-red-500/10 p-2 text-red-400 hover:bg-red-500 hover:text-white"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

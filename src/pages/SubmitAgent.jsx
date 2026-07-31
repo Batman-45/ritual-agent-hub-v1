@@ -58,22 +58,30 @@ export default function SubmitAgent() {
   data: { user },
 } = await supabase.auth.getUser();
 
+if (!user) {
+  alert("Please login with GitHub first.");
+  setLoading(false);
+  navigate("/login");
+  return;
+}
+
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from("Projects")
-      .insert([
-  {
-    ...form,
-    owner_id: user.id,
-    featured: false,
-    verified: false,
-    likes: 0,
-    views: 0,
-  },
-])
-      .select()
-      .single();
+    const projectData = {
+  ...form,
+  launch_date: form.launch_date ? form.launch_date : null,
+  owner_id: user.id,
+  featured: false,
+  verified: false,
+  likes: 0,
+  views: 0,
+};
+
+const { data, error } = await supabase
+  .from("Projects")
+  .insert([projectData])
+  .select()
+  .single();
 
     setLoading(false);
 
@@ -136,68 +144,69 @@ export default function SubmitAgent() {
                   name="name"
                   value={form.name}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none focus:border-emerald-500"
+                  className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500 text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500"
                   placeholder="Ritual Studio"
                 />
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm text-zinc-400">
-                  Description *
-                </label>
+            <div>
+  <label className="mb-2 block text-sm text-zinc-400">
+    Description *
+  </label>
 
-                <textarea
-                  rows={5}
-                  name="description"
-                  value={form.description}
-                  onChange={handleChange}
-                  className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none focus:border-emerald-500"
-                  placeholder="Describe your project..."
-                />
-              </div>
+  <textarea
+    rows={5}
+    name="description"
+    value={form.description}
+    onChange={handleChange}
+    placeholder="Describe your project..."
+    className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500"
+  />
+</div>
 
-              <div className="grid gap-6 md:grid-cols-2">
+<div className="grid gap-6 md:grid-cols-2">
 
-                <div>
-                  <label className="mb-2 block text-sm text-zinc-400">
-                    Category
-                  </label>
+  <div>
+    <label className="mb-2 block text-sm text-zinc-400">
+      Category
+    </label>
 
-                  <select
-                    name="category"
-                    value={form.category}
-                    onChange={handleChange}
-                    className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
-                  >
-                    <option>AI</option>
-                    <option>Agent</option>
-                    <option>Infrastructure</option>
-                    <option>Developer Tools</option>
-                    <option>Gaming</option>
-                    <option>DeFi</option>
-                  </select>
-                </div>
+    <select
+      name="category"
+      value={form.category}
+      onChange={handleChange}
+      className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white"
+    >
+      <option>AI</option>
+      <option>Agent</option>
+      <option>Infrastructure</option>
+      <option>Developer Tools</option>
+      <option>Gaming</option>
+      <option>DeFi</option>
+    </select>
+  </div>
 
-                <div>
-                  <label className="mb-2 block text-sm text-zinc-400">
-                    Type
-                  </label>
+  <div>
+    <label className="mb-2 block text-sm text-zinc-400">
+      Type
+    </label>
 
-                  <select
-                    name="type"
-                    value={form.type}
-                    onChange={handleChange}
-                    className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
-                  >
-                    <option>Project</option>
-                    <option>Protocol</option>
-                    <option>Tool</option>
-                    <option>Library</option>
-                    <option>Infrastructure</option>
-                  </select>
-                </div>
+    <select
+      name="type"
+      value={form.type}
+      onChange={handleChange}
+      className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white"
+    >
+      <option>Project</option>
+      <option>Protocol</option>
+      <option>Tool</option>
+      <option>Library</option>
+      <option>Infrastructure</option>
+    </select>
+  </div>
 
-              </div>
+</div>
+  
 
               <div>
                 <label className="mb-2 block text-sm text-zinc-400">
@@ -208,7 +217,7 @@ export default function SubmitAgent() {
                   name="builder"
                   value={form.builder}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none focus:border-emerald-500"
+                  className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500"
                   placeholder="Your name or team"
                 />
               </div>
@@ -220,7 +229,7 @@ export default function SubmitAgent() {
                   value={form.website}
                   onChange={handleChange}
                   placeholder="Website"
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500"
                 />
 
                 <input
@@ -228,7 +237,7 @@ export default function SubmitAgent() {
                   value={form.github}
                   onChange={handleChange}
                   placeholder="GitHub"
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500"
                 />
 
                 <input
@@ -236,7 +245,7 @@ export default function SubmitAgent() {
                   value={form.documentation}
                   onChange={handleChange}
                   placeholder="Documentation"
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500"
                 />
 
                 <input
@@ -244,7 +253,7 @@ export default function SubmitAgent() {
                   value={form.twitter}
                   onChange={handleChange}
                   placeholder="Twitter / X"
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500"
                 />
 
                 <input
@@ -252,7 +261,7 @@ export default function SubmitAgent() {
                   value={form.discord}
                   onChange={handleChange}
                   placeholder="Discord"
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500"
                 />
 
               </div>
@@ -263,7 +272,7 @@ export default function SubmitAgent() {
                   value={form.logo}
                   onChange={handleChange}
                   placeholder="Logo URL (optional)"
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500"
                 />
 
                 <input
@@ -271,7 +280,7 @@ export default function SubmitAgent() {
                   value={form.image}
                   onChange={handleChange}
                   placeholder="Banner URL (optional)"
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500"
                 />
 
               </div>
@@ -283,7 +292,7 @@ export default function SubmitAgent() {
                   value={form.tags}
                   onChange={handleChange}
                   placeholder="AI, Agent, DeFi"
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500"
                 />
 
                 <input
@@ -291,7 +300,7 @@ export default function SubmitAgent() {
                   name="launch_date"
                   value={form.launch_date}
                   onChange={handleChange}
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500"
                 />
 
               </div>

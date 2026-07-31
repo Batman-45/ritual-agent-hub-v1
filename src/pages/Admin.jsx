@@ -294,6 +294,10 @@ export default function Admin() {
                       </td>
 
                       <td className="px-6 py-5">
+  👀 {project.views || 0}
+</td>
+
+<td className="px-6 py-5">
   ❤️ {project.likes || 0}
 </td>
 

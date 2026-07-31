@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import {
+  FolderGit2,
+  Heart,
+  Eye,
+  User,
+} from "lucide-react";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -13,10 +19,10 @@ export default function BuilderProfile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadBuilderProjects();
+    loadProjects();
   }, [builder]);
 
-  async function loadBuilderProjects() {
+  async function loadProjects() {
     setLoading(true);
 
     const { data } = await supabase
@@ -39,65 +45,108 @@ export default function BuilderProfile() {
   );
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-white">
+    <>
       <Navbar />
 
-      <main className="mx-auto max-w-7xl px-6 py-16">
+      <main className="min-h-screen bg-[#09090B] text-white">
 
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-10">
+        <section className="mx-auto max-w-7xl px-6 py-16">
 
-          <h1 className="text-5xl font-black">
-            {decodeURIComponent(builder)}
-          </h1>
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-10">
 
-          <p className="mt-3 text-zinc-400">
-            Builder Profile
-          </p>
+            <div className="flex items-center gap-6">
 
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+              <div className="flex h-28 w-28 items-center justify-center rounded-full bg-emerald-500 text-black">
+                <User size={48} />
+              </div>
 
-            <div className="rounded-2xl bg-zinc-800 p-6">
-              <p className="text-zinc-400">Projects</p>
-              <h2 className="mt-2 text-4xl font-bold">
-                {projects.length}
-              </h2>
-            </div>
+              <div>
 
-            <div className="rounded-2xl bg-zinc-800 p-6">
-              <p className="text-zinc-400">Views</p>
-              <h2 className="mt-2 text-4xl font-bold">
-                {totalViews}
-              </h2>
-            </div>
+                <h1 className="text-5xl font-black">
+                  {decodeURIComponent(builder)}
+                </h1>
 
-            <div className="rounded-2xl bg-zinc-800 p-6">
-              <p className="text-zinc-400">Likes</p>
-              <h2 className="mt-2 text-4xl font-bold">
-                {totalLikes}
-              </h2>
+                <p className="mt-3 text-zinc-400">
+                  Ritual Ecosystem Builder
+                </p>
+
+              </div>
+
             </div>
 
           </div>
 
-        </div>
+        </section>
 
-        <section className="mt-14">
+        <section className="mx-auto grid max-w-7xl gap-6 px-6 md:grid-cols-3">
 
-          <h2 className="mb-8 text-3xl font-bold">
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
+
+            <FolderGit2 className="mb-4 text-emerald-400" />
+
+            <h2 className="text-4xl font-black">
+              {projects.length}
+            </h2>
+
+            <p className="text-zinc-400">
+              Projects
+            </p>
+
+          </div>
+
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
+
+            <Heart className="mb-4 text-red-400" />
+
+            <h2 className="text-4xl font-black">
+              {totalLikes}
+            </h2>
+
+            <p className="text-zinc-400">
+              Likes
+            </p>
+
+          </div>
+
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
+
+            <Eye className="mb-4 text-cyan-400" />
+
+            <h2 className="text-4xl font-black">
+              {totalViews}
+            </h2>
+
+            <p className="text-zinc-400">
+              Views
+            </p>
+
+          </div>
+
+        </section>
+
+        <section className="mx-auto max-w-7xl px-6 py-16">
+
+          <h2 className="mb-10 text-3xl font-bold">
             Projects
           </h2>
 
           {loading ? (
+
             <p>Loading...</p>
+
           ) : (
+
             <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+
               {projects.map((project) => (
                 <ProjectCard
                   key={project.id}
                   project={project}
                 />
               ))}
+
             </div>
+
           )}
 
         </section>
@@ -105,6 +154,6 @@ export default function BuilderProfile() {
       </main>
 
       <Footer />
-    </div>
+    </>
   );
 }

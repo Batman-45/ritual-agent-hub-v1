@@ -1,269 +1,309 @@
-import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../services/supabase";
+import { useEffect, useState } from "react";
+import { Navigate, Link } from "react-router-dom";
 import {
-  Search,
-  CheckCircle,
-  XCircle,
-  Clock,
-  FolderOpen,
+  FolderGit2,
   Eye,
   Heart,
+  Plus,
+  Star,
+  CheckCircle2,
+  Activity,
+  TrendingUp,
 } from "lucide-react";
 
-export default function Dashboard() {
-  const [projects, setProjects] = useState([]);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import { supabase } from "../services/supabase";
 
-  const [stats, setStats] = useState({
-    total: 0,
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-  });
+export default function Dashboard() {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [projects, setProjects] = useState([]);
 
   useEffect(() => {
-    loadProjects();
+    loadDashboard();
   }, []);
 
-  async function loadProjects() {
-    setLoading(true);
+  async function loadDashboard() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    const { data, error } = await supabase
-      .from("Projects")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.log(error);
+    if (!user) {
       setLoading(false);
       return;
     }
 
-    const allProjects = data || [];
+    setUser(user);
 
-    setProjects(allProjects);
+    const { data, error } = await supabase
+      .from("Projects")
+      .select("*")
+      .eq("owner_id", user.id)
+      .order("created_at", { ascending: false });
 
-    setStats({
-      total: allProjects.length,
-      pending: allProjects.filter(
-        (p) => p.status === "pending"
-      ).length,
-      approved: allProjects.filter(
-        (p) => p.status === "approved"
-      ).length,
-      rejected: allProjects.filter(
-        (p) => p.status === "rejected"
-      ).length,
-    });
+    if (!error) {
+      setProjects(data || []);
+    }
 
     setLoading(false);
   }
 
-  async function approveProject(id) {
-    await supabase
-      .from("Projects")
-      .update({ status: "approved" })
-      .eq("id", id);
-
-    loadProjects();
+  if (!loading && !user) {
+    return <Navigate to="/" replace />;
   }
 
-  async function rejectProject(id) {
-    await supabase
-      .from("Projects")
-      .update({ status: "rejected" })
-      .eq("id", id);
-
-    loadProjects();
-  }
-
-  const filteredProjects = useMemo(() => {
-    return projects.filter((project) =>
-      project.name
-        ?.toLowerCase()
-        .includes(search.toLowerCase())
-    );
-  }, [projects, search]);
+  const totalViews = projects.reduce((sum, p) => sum + (p.views || 0), 0);
+  const totalLikes = projects.reduce((sum, p) => sum + (p.likes || 0), 0);
+  const featuredCount = projects.filter((p) => p.featured).length;
+  const verifiedCount = projects.filter((p) => p.verified).length;
+  const recentProjects = projects.slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-white">
-      <div className="mx-auto max-w-7xl p-8">
+    <>
+      <Navbar />
 
-        <h1 className="mb-10 text-5xl font-black">
-          Admin Dashboard
-        </h1>
+      <main className="min-h-screen bg-[#09090B] text-white">
 
-        {/* Stats */}
+        {/* Hero */}
 
-        <div className="mb-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <section className="mx-auto max-w-7xl px-6 py-16">
 
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-            <FolderOpen className="text-emerald-400" />
-            <h2 className="mt-4 text-4xl font-bold">
-              {stats.total}
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+            <div>
+
+              <h1 className="text-5xl font-black">
+                Dashboard
+              </h1>
+
+              <p className="mt-3 text-zinc-400">
+                Welcome back,
+                {" "}
+                {user?.user_metadata?.user_name || user?.email}
+              </p>
+
+            </div>
+
+            <Link
+              to="/submit"
+              className="flex w-fit items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-6 py-4 font-semibold text-black transition hover:scale-105"
+            >
+              <Plus size={18} />
+              Submit Project
+            </Link>
+
+          </div>
+
+        </section>
+
+        {/* Analytics */}
+
+        <section className="mx-auto grid max-w-7xl gap-6 px-6 md:grid-cols-2 xl:grid-cols-5">
+
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
+            <FolderGit2 className="mb-4 text-emerald-400" />
+            <h2 className="text-4xl font-black">{projects.length}</h2>
+            <p className="mt-2 text-zinc-400">Projects</p>
+          </div>
+
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
+            <Eye className="mb-4 text-cyan-400" />
+            <h2 className="text-4xl font-black">{totalViews}</h2>
+            <p className="mt-2 text-zinc-400">Views</p>
+          </div>
+
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
+            <Heart className="mb-4 text-red-400" />
+            <h2 className="text-4xl font-black">{totalLikes}</h2>
+            <p className="mt-2 text-zinc-400">Likes</p>
+          </div>
+
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
+            <Star className="mb-4 text-yellow-400" />
+            <h2 className="text-4xl font-black">{featuredCount}</h2>
+            <p className="mt-2 text-zinc-400">Featured</p>
+          </div>
+
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
+            <CheckCircle2 className="mb-4 text-emerald-400" />
+            <h2 className="text-4xl font-black">{verifiedCount}</h2>
+            <p className="mt-2 text-zinc-400">Verified</p>
+          </div>
+
+        </section>
+                {/* Recent Activity */}
+
+        <section className="mx-auto max-w-7xl px-6 py-12">
+
+          <div className="mb-8 flex items-center gap-3">
+
+            <Activity className="text-emerald-400" />
+
+            <h2 className="text-3xl font-bold">
+              Recent Activity
             </h2>
-            <p className="text-zinc-400">
-              Total Projects
-            </p>
+
           </div>
 
-          <div className="rounded-3xl border border-yellow-500/20 bg-zinc-900 p-6">
-            <Clock className="text-yellow-400" />
-            <h2 className="mt-4 text-4xl font-bold">
-              {stats.pending}
-            </h2>
-            <p className="text-zinc-400">
-              Pending
-            </p>
-          </div>
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
 
-          <div className="rounded-3xl border border-emerald-500/20 bg-zinc-900 p-6">
-            <CheckCircle className="text-emerald-400" />
-            <h2 className="mt-4 text-4xl font-bold">
-              {stats.approved}
-            </h2>
-            <p className="text-zinc-400">
-              Approved
-            </p>
-          </div>
+            {recentProjects.length === 0 ? (
 
-          <div className="rounded-3xl border border-red-500/20 bg-zinc-900 p-6">
-            <XCircle className="text-red-400" />
-            <h2 className="mt-4 text-4xl font-bold">
-              {stats.rejected}
-            </h2>
-            <p className="text-zinc-400">
-              Rejected
-            </p>
-          </div>
+              <p className="text-zinc-400">
+                You haven't submitted any projects yet.
+              </p>
 
-        </div>
+            ) : (
 
-        {/* Search */}
+              <div className="space-y-5">
 
-        <div className="relative mb-10">
+                {recentProjects.map((project) => (
 
-          <Search
-            size={20}
-            className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500"
-          />
+                  <div
+                    key={project.id}
+                    className="flex items-center justify-between border-b border-zinc-800 pb-4"
+                  >
 
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search projects..."
-            className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 py-4 pl-14 pr-5 outline-none focus:border-emerald-500"
-          />
+                    <div>
 
-        </div>
+                      <h3 className="font-semibold text-white">
+                        {project.name}
+                      </h3>
 
-        {/* Projects */}
+                      <p className="text-sm text-zinc-400">
+                        {project.category}
+                      </p>
 
-        {loading ? (
-          <p>Loading...</p>
-        ) : filteredProjects.length === 0 ? (
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-16 text-center">
-            No projects found.
-          </div>
-        ) : (
-          <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-
-            {filteredProjects.map((project) => (
-
-              <div
-                key={project.id}
-                className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-emerald-500"
-              >
-
-                <div className="flex items-center gap-4">
-
-                  {project.logo ? (
-                    <img
-                      src={project.logo}
-                      alt={project.name}
-                      className="h-16 w-16 rounded-2xl object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500 text-2xl font-bold text-black">
-                      {project.name?.charAt(0)}
                     </div>
-                  )}
 
-                  <div>
+                    <div className="flex items-center gap-4 text-sm text-zinc-400">
 
-                    <h2 className="text-xl font-bold">
-                      {project.name}
-                    </h2>
+                      <span className="flex items-center gap-1">
+                        <Eye size={16} />
+                        {project.views || 0}
+                      </span>
 
-                    <p className="text-sm text-zinc-500">
-                      {project.category}
-                    </p>
+                      <span className="flex items-center gap-1">
+                        <Heart size={16} />
+                        {project.likes || 0}
+                      </span>
+
+                      <TrendingUp className="text-emerald-400" />
+
+                    </div>
 
                   </div>
 
-                </div>
-
-                <p className="mt-5 line-clamp-3 text-sm leading-7 text-zinc-400">
-                  {project.description}
-                </p>
-
-                <div className="mt-5 flex gap-5 text-sm text-zinc-400">
-
-                  <span className="flex items-center gap-1">
-                    <Eye size={16} />
-                    {project.views || 0}
-                  </span>
-
-                  <span className="flex items-center gap-1">
-                    <Heart size={16} />
-                    {project.likes || 0}
-                  </span>
-
-                </div>
-
-                <div className="mt-5">
-
-                  <span
-                    className={`rounded-full px-3 py-1 text-sm font-semibold ${
-                      project.status === "approved"
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : project.status === "rejected"
-                        ? "bg-red-500/20 text-red-400"
-                        : "bg-yellow-500/20 text-yellow-400"
-                    }`}
-                  >
-                    {project.status}
-                  </span>
-
-                </div>
-
-                <div className="mt-6 flex gap-3">
-
-                  <button
-                    onClick={() => approveProject(project.id)}
-                    className="flex-1 rounded-xl bg-emerald-500 py-3 font-semibold text-black hover:bg-emerald-400"
-                  >
-                    Approve
-                  </button>
-
-                  <button
-                    onClick={() => rejectProject(project.id)}
-                    className="flex-1 rounded-xl bg-red-500 py-3 font-semibold hover:bg-red-400"
-                  >
-                    Reject
-                  </button>
-
-                </div>
+                ))}
 
               </div>
 
-            ))}
+            )}
 
           </div>
-        )}
 
-      </div>
-    </div>
+        </section>
+
+        {/* Projects Table */}
+
+        <section className="mx-auto max-w-7xl px-6 pb-24">
+
+          <div className="mb-8 flex items-center justify-between">
+
+            <h2 className="text-3xl font-bold">
+              My Projects
+            </h2>
+
+            <Link
+              to="/submit"
+              className="flex items-center gap-2 rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-black"
+            >
+              <Plus size={18} />
+              New Project
+            </Link>
+
+          </div>
+
+          <div className="overflow-hidden rounded-3xl border border-zinc-800">
+
+            <table className="w-full">
+
+              <thead className="bg-zinc-900">
+
+                <tr>
+
+                  <th className="p-4 text-left">Project</th>
+                  <th className="p-4 text-left">Views</th>
+                  <th className="p-4 text-left">Likes</th>
+                  <th className="p-4 text-left">Status</th>
+
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                {projects.length === 0 ? (
+
+                  <tr>
+
+                    <td
+                      colSpan="4"
+                      className="p-10 text-center text-zinc-500"
+                    >
+                      No projects yet.
+                    </td>
+
+                  </tr>
+
+                ) : (
+
+                  projects.map((project) => (
+
+                    <tr
+                      key={project.id}
+                      className="border-t border-zinc-800 hover:bg-zinc-900/50"
+                    >
+
+                      <td className="p-4 font-medium text-white">
+                        {project.name}
+                      </td>
+
+                      <td className="p-4 text-zinc-300">
+                        {project.views || 0}
+                      </td>
+
+                      <td className="p-4 text-zinc-300">
+                        {project.likes || 0}
+                      </td>
+
+                      <td className="p-4">
+
+                        <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-sm text-emerald-400">
+                          {project.status || "Active"}
+                        </span>
+
+                      </td>
+
+                    </tr>
+
+                  ))
+
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </section>
+
+      </main>
+
+      <Footer />
+
+    </>
   );
 }

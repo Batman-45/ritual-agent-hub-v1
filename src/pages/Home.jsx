@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   Search,
   Sparkles,
-  ArrowRight,
   Boxes,
-  Rocket,
-  Cpu,
-  Shield,
+  Users,
+  Heart,
+  Eye,
 } from "lucide-react";
 
 import Navbar from "../components/Navbar";
@@ -17,18 +15,13 @@ import { supabase } from "../services/supabase";
 
 export default function Home() {
   const [projects, setProjects] = useState([]);
-  const [stats, setStats] = useState({
-  projects: 0,
-  builders: 0,
-  likes: 0,
-  views: 0,
-});
-  const [featuredProjects, setFeaturedProjects] = useState([]);
-
   const [loading, setLoading] = useState(true);
 
-  const [search, setSearch] = useState("");
+  const [featuredProjects, setFeaturedProjects] = useState([]);
+  const [trendingProjects, setTrendingProjects] = useState([]);
+  const [latestProjects, setLatestProjects] = useState([]);
 
+  const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
 
   const categories = [
@@ -39,7 +32,6 @@ export default function Home() {
     "Developer Tools",
     "Gaming",
     "DeFi",
-    "Security",
   ];
 
   useEffect(() => {
@@ -49,329 +41,306 @@ export default function Home() {
   async function loadProjects() {
     setLoading(true);
 
-    const [{ data: latest }, { data: featured }] = await Promise.all([
-      supabase
-        .from("Projects")
-        .select("*")
-        .order("created_at", { ascending: false }),
+    const { data, error } = await supabase
+      .from("Projects")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      supabase
-        .from("Projects")
-        .select("*")
-        .eq("featured", true)
-        .limit(6),
-    ]);
+    if (!error) {
+      const list = data || [];
 
-    setProjects(latest || []);
-setFeaturedProjects(featured || []);
+      setProjects(list);
 
-// Calculate statistics
-const allProjects = latest || [];
+      setFeaturedProjects(
+        list.filter((p) => p.featured).slice(0, 3)
+      );
 
-setStats({
-  projects: allProjects.length,
-  builders: new Set(
-    allProjects.map((project) => project.builder)
-  ).size,
-  likes: allProjects.reduce(
-    (sum, project) => sum + (project.likes || 0),
-    0
-  ),
-  views: allProjects.reduce(
-    (sum, project) => sum + (project.views || 0),
-    0
-  ),
-});
+      setTrendingProjects(
+        [...list]
+          .sort((a, b) => (b.views || 0) - (a.views || 0))
+          .slice(0, 6)
+      );
 
-setLoading(false);
-}
+      setLatestProjects(
+        [...list]
+          .sort(
+            (a, b) =>
+              new Date(b.created_at) -
+              new Date(a.created_at)
+          )
+          .slice(0, 6)
+      );
+    }
+
+    setLoading(false);
+  }
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
+      const q = search.toLowerCase();
+
       const matchesSearch =
-        project.name?.toLowerCase().includes(search.toLowerCase()) ||
-        project.builder?.toLowerCase().includes(search.toLowerCase()) ||
-        project.description?.toLowerCase().includes(search.toLowerCase()) ||
-        project.tags?.toLowerCase().includes(search.toLowerCase());
+        project.name?.toLowerCase().includes(q) ||
+        project.description?.toLowerCase().includes(q) ||
+        project.builder?.toLowerCase().includes(q) ||
+        project.category?.toLowerCase().includes(q);
 
       const matchesCategory =
-        category === "All" || project.category === category;
+        category === "All" ||
+        project.category === category;
 
       return matchesSearch && matchesCategory;
     });
   }, [projects, search, category]);
 
+  const stats = {
+    projects: projects.length,
+    builders: new Set(
+      projects.map((p) => p.builder).filter(Boolean)
+    ).size,
+
+    likes: projects.reduce(
+      (sum, p) => sum + (p.likes || 0),
+      0
+    ),
+
+    views: projects.reduce(
+      (sum, p) => sum + (p.views || 0),
+      0
+    ),
+  };
+
   return (
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#09090B]">
+      <main className="min-h-screen bg-[#09090B] text-white">
+        {/* Hero Section */}
 
-        {/* Hero */}
+<section className="relative overflow-hidden border-b border-zinc-800">
 
-        <section className="relative overflow-hidden">
+  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-cyan-500/10" />
 
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.15),transparent_55%)]" />
+  <div className="relative mx-auto max-w-7xl px-6 py-24">
 
-          <div className="mx-auto max-w-7xl px-6 py-24">
+    <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-400">
+      <Sparkles size={16} />
+      Ritual Ecosystem Directory
+    </span>
 
-            <div className="mx-auto max-w-4xl text-center">
+    <h1 className="mt-8 max-w-5xl text-6xl font-black leading-tight">
+      Discover the next generation of
+      <span className="text-emerald-400"> AI Agents</span>
+      <br />
+      built on Ritual.
+    </h1>
 
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-400">
+    <p className="mt-6 max-w-3xl text-xl leading-8 text-zinc-400">
+      Explore AI agents, infrastructure, developer tools and
+      community projects built on Ritual.
+    </p>
 
-                <Sparkles size={16} />
+    <div className="relative mt-10 max-w-2xl">
 
-                Discover Everything Built on Ritual
+      <Search
+        size={22}
+        className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500"
+      />
 
-              </div>
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search projects..."
+        className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 py-5 pl-14 pr-5 outline-none focus:border-emerald-500"
+      />
 
-              <h1 className="text-5xl font-black leading-tight text-white md:text-7xl">
+    </div>
 
-                Ritual
+    <div className="mt-14 grid gap-6 md:grid-cols-4">
 
-                <span className="block bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
+        <Boxes className="mb-4 text-emerald-400" />
+        <h2 className="text-4xl font-black">{stats.projects}</h2>
+        <p className="mt-2 text-zinc-400">Projects</p>
+      </div>
 
-                  Ecosystem Directory
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
+        <Users className="mb-4 text-emerald-400" />
+        <h2 className="text-4xl font-black">{stats.builders}</h2>
+        <p className="mt-2 text-zinc-400">Builders</p>
+      </div>
 
-                </span>
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
+        <Heart className="mb-4 text-emerald-400" />
+        <h2 className="text-4xl font-black">{stats.likes}</h2>
+        <p className="mt-2 text-zinc-400">Likes</p>
+      </div>
 
-              </h1>
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
+        <Eye className="mb-4 text-emerald-400" />
+        <h2 className="text-4xl font-black">{stats.views}</h2>
+        <p className="mt-2 text-zinc-400">Views</p>
+      </div>
 
-              <p className="mx-auto mt-8 max-w-3xl text-lg leading-8 text-zinc-400">
+    </div>
 
-                Discover AI projects, autonomous agents, developer tools,
-                infrastructure and applications powering the Ritual ecosystem.
+  </div>
 
-              </p>
+</section>
 
-              <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
+{/* Featured Projects */}
 
-                <Link
-                  to="/submit"
-                  className="rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-8 py-4 font-semibold text-black transition hover:scale-105"
-                >
-                  Submit Project
-                </Link>
+<section className="mx-auto max-w-7xl px-6 py-20">
 
-                <a
-                  href="#projects"
-                  className="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 px-8 py-4 font-semibold transition hover:border-emerald-500"
-                >
-                  Explore Projects
+  <div className="mb-10">
+    <h2 className="text-4xl font-black">⭐ Featured Projects</h2>
+    <p className="mt-2 text-zinc-400">
+      Highlighted projects from the Ritual ecosystem
+    </p>
+  </div>
 
-                  <ArrowRight size={18} />
-                </a>
+  <div className="grid gap-8 lg:grid-cols-3">
+    {featuredProjects.map((project) => (
+      <ProjectCard
+        key={project.id}
+        project={project}
+      />
+    ))}
+  </div>
 
-              </div>
+</section>
 
-            </div>
+{/* Trending Projects */}
 
-          </div>
+<section className="mx-auto max-w-7xl px-6 pb-20">
 
-        </section>
+  <div className="mb-10">
+    <h2 className="text-4xl font-black">🔥 Trending Projects</h2>
+    <p className="mt-2 text-zinc-400">
+      Most viewed projects
+    </p>
+  </div>
 
-        {/* Search */}
+  <div className="grid gap-8 lg:grid-cols-3">
+    {trendingProjects.map((project) => (
+      <ProjectCard
+        key={project.id}
+        project={project}
+      />
+    ))}
+  </div>
 
-        <section className="mx-auto -mt-8 max-w-7xl px-6">
+</section>
 
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6 backdrop-blur-xl">
+{/* Latest Projects */}
 
-            <div className="relative">
+<section className="mx-auto max-w-7xl px-6 pb-20">
 
-              <Search
-                size={20}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500"
-              />
+  <div className="mb-10">
+    <h2 className="text-4xl font-black">🆕 Latest Projects</h2>
+    <p className="mt-2 text-zinc-400">
+      Recently submitted projects
+    </p>
+  </div>
 
-              <input
-                type="text"
-                placeholder="Search projects, builders or tags..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 py-4 pl-14 pr-5 outline-none transition focus:border-emerald-500"
-              />
+  <div className="grid gap-8 lg:grid-cols-3">
+    {latestProjects.map((project) => (
+      <ProjectCard
+        key={project.id}
+        project={project}
+      />
+    ))}
+  </div>
 
-            </div>
+</section>
+{/* Categories */}
 
-            <div className="mt-6 flex flex-wrap gap-3">
+<section className="mx-auto max-w-7xl px-6">
 
-              {categories.map((item) => (
-                <button
-                  key={item}
-                  onClick={() => setCategory(item)}
-                  className={`rounded-full px-5 py-2 text-sm transition ${
-                    category === item
-                      ? "bg-emerald-500 text-black"
-                      : "border border-zinc-800 bg-zinc-900 hover:border-emerald-500"
-                  }`}
-                >
-                  {item}
-                </button>
-              ))}
+  <div className="mb-10 flex flex-wrap gap-3">
 
-            </div>
+    {categories.map((item) => (
+      <button
+        key={item}
+        onClick={() => setCategory(item)}
+        className={`rounded-full px-5 py-3 transition ${
+          category === item
+            ? "bg-emerald-500 font-semibold text-black"
+            : "border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-emerald-500"
+        }`}
+      >
+        {item}
+      </button>
+    ))}
 
-          </div>
+  </div>
 
-        </section>
-                {/* Featured Projects */}
+</section>
 
-        <section className="mx-auto mt-20 max-w-7xl px-6">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h2 className="flex items-center gap-3 text-3xl font-bold text-white">
-                <Rocket className="text-emerald-400" />
-                Featured Projects
-              </h2>
+{/* Explore Projects */}
 
-              <p className="mt-2 text-zinc-400">
-                Hand-picked projects building on Ritual.
-              </p>
-            </div>
-          </div>
+<section className="mx-auto max-w-7xl px-6 pb-24">
 
-          {loading ? (
-            <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-              {[...Array(6)].map((_, index) => (
-                <div
-                  key={index}
-                  className="h-[420px] animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900"
-                />
-              ))}
-            </div>
-          ) : featuredProjects.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-zinc-700 py-20 text-center">
-              <Boxes size={56} className="mx-auto text-zinc-600" />
-              <h3 className="mt-6 text-2xl font-bold text-white">
-                No Featured Projects
-              </h3>
-              <p className="mt-2 text-zinc-500">
-                Featured projects will appear here.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-              {featuredProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
-            </div>
-          )}
-        </section>
+  <div className="mb-10">
 
-        {/* Latest Projects */}
+    <h2 className="text-4xl font-black">
+      Explore Projects
+    </h2>
 
-        <section
-          id="projects"
-          className="mx-auto mt-24 max-w-7xl px-6"
-        >
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h2 className="flex items-center gap-3 text-3xl font-bold text-white">
-                <Cpu className="text-emerald-400" />
-                Latest Projects
-              </h2>
+    <p className="mt-2 text-zinc-400">
+      Browse every project built on Ritual.
+    </p>
 
-              <p className="mt-2 text-zinc-400">
-                Explore everything built on Ritual.
-              </p>
-            </div>
+  </div>
 
-            <div className="text-sm text-zinc-500">
-              {filteredProjects.length} Projects
-            </div>
-          </div>
+  {loading ? (
 
-          {loading ? (
-            <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-              {[...Array(6)].map((_, index) => (
-                <div
-                  key={index}
-                  className="h-[420px] animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900"
-                />
-              ))}
-            </div>
-          ) : filteredProjects.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-zinc-700 py-20 text-center">
-              <Search size={56} className="mx-auto text-zinc-600" />
-              <h3 className="mt-6 text-2xl font-bold text-white">
-                No Projects Found
-              </h3>
+    <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
 
-              <p className="mt-2 text-zinc-500">
-                Try another search or category.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-              {filteredProjects.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div
+          key={i}
+          className="h-[430px] animate-pulse rounded-3xl bg-zinc-900"
+        />
+      ))}
 
-        {/* Ecosystem Stats */}
+    </div>
 
-        <section className="mx-auto mt-24 max-w-7xl px-6">
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-8 backdrop-blur-xl">
-              <p className="text-sm uppercase tracking-wide text-zinc-500">
-                Projects
-              </p>
+  ) : filteredProjects.length === 0 ? (
 
-              <h3 className="mt-3 text-4xl font-black">
-                {stats.projects}
-              </h3>
-            </div>
+    <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-16 text-center">
 
-            <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-8 backdrop-blur-xl">
-              <p className="text-sm uppercase tracking-wide text-zinc-500">
-                Builders
-              </p>
+      <h3 className="text-3xl font-bold">
+        No projects found
+      </h3>
 
-              <h3 className="mt-3 text-4xl font-black">
-                {stats.builders}
-              </h3>
-            </div>
+      <p className="mt-4 text-zinc-400">
+        Try another search or category.
+      </p>
 
-            <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-8 backdrop-blur-xl">
-              <p className="text-sm uppercase tracking-wide text-zinc-500">
-                Categories
-              </p>
+    </div>
 
-              <h3 className="mt-3 text-4xl font-black">
-                {
-                  new Set(
-                    projects.map((p) => p.category)
-                  ).size
-                }
-              </h3>
-            </div>
+  ) : (
 
-            <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-8 backdrop-blur-xl">
-              <p className="text-sm uppercase tracking-wide text-zinc-500">
-                Verified
-              </p>
+    <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
 
-              <h3 className="mt-3 flex items-center gap-3 text-4xl font-black">
-                <Shield className="text-emerald-400" />
+      {filteredProjects.map((project) => (
+        <ProjectCard
+          key={project.id}
+          project={project}
+        />
+      ))}
 
-                {
-                  projects.filter(
-                    (p) => p.verified
-                  ).length
-                }
-              </h3>
-            </div>
-          </div>
-        </section>
+    </div>
 
-      </main>
+  )}
 
-      <Footer />
-    </>
-  );
+</section>
+
+</main>
+
+<Footer />
+
+</>
+);
 }

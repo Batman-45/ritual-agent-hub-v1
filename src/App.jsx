@@ -1,79 +1,47 @@
-import Explore from "./pages/Explore";
-import Dashboard from "./pages/Dashboard";
-import EditProject from "./pages/EditProject";
-import MyDashboard from "./pages/MyDashboard";
-import BuilderProfile from "./pages/BuilderProfile";
 import { Routes, Route } from "react-router-dom";
-
+import BuilderProfile from "./pages/BuilderProfile";
 import Home from "./pages/Home";
-import ProjectDetails from "./pages/ProjectDetails";
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import MyProjects from "./pages/MyProjects";
 import SubmitAgent from "./pages/SubmitAgent";
-import Login from "./pages/Login";
-import Admin from "./pages/Admin";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProjectDetails from "./pages/ProjectDetails";
+import EditProject from "./pages/EditProject";
+
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-[#09090B] text-white selection:bg-emerald-500/30">
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route
-  path="/explore"
-  element={<Explore />}
+    <Routes>
+
+      <Route
+  path="/builder/:builder"
+  element={<BuilderProfile />}
 />
 
-        <Route
-          path="/project/:id"
-          element={<ProjectDetails />}
-        />
+      <Route path="/" element={<Home />} />
 
-        <Route
-          path="/builder/:builder"
-          element={<BuilderProfile />}
-        />
+      <Route path="/dashboard" element={<Dashboard />} />
 
-        <Route
-          path="/submit"
-          element={<SubmitAgent />}
-        />
-        <Route
-  path="/my-dashboard"
-  element={
-    <ProtectedRoute>
-      <MyDashboard />
-    </ProtectedRoute>
-  }
-/>
+      <Route path="/profile" element={<Profile />} />
 
-        <Route
-          path="/login"
-          element={<Login />}
-        />
-        <Route
-  path="/dashboard"
-  element={
-    <ProtectedRoute>
-      <Dashboard />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/edit-project/:id"
-  element={
-    <ProtectedRoute>
-      <EditProject />
-    </ProtectedRoute>
-  }
-/>
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <Admin />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </div>
+      <Route path="/my-projects" element={<MyProjects />} />
+
+      <Route path="/submit" element={<SubmitAgent />} />
+
+      <Route path="/project/:id" element={<ProjectDetails />} />
+
+      <Route path="/project/:id/edit" element={<EditProject />} />
+
+      <Route path="/edit/:id" element={<EditProject />} />
+
+      <Route
+        path="*"
+        element={
+          <div className="flex min-h-screen items-center justify-center bg-[#09090B] text-white">
+            <h1 className="text-4xl font-bold">404 | Page Not Found</h1>
+          </div>
+        }
+      />
+    </Routes>
   );
 }
