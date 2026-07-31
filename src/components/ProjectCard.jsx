@@ -74,10 +74,10 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
 
   return (
     <div
-      onClick={() => navigate(`/project/${project.id}`)}
-      className="group cursor-pointer overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/10"
-    >
-      {/* Banner */}
+  onClick={() => navigate(`/project/${project.id}`)}
+  className="group cursor-pointer overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-xl transition-all duration-500 hover:-translate-y-3 hover:scale-[1.02] hover:border-emerald-400 hover:shadow-[0_20px_60px_rgba(16,185,129,0.25)]"
+>
+  {/* Banner */}
       <div className="relative h-48 overflow-hidden">
         {project.image && !bannerError ? (
           <img
@@ -119,7 +119,7 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
               alt={project.name}
               loading="lazy"
               onError={() => setLogoError(true)}
-              className="h-16 w-16 rounded-2xl border border-zinc-700 bg-zinc-900 object-cover shadow-lg"
+              className="h-16 w-16 rounded-2xl border border-zinc-700 bg-zinc-900 object-cover shadow-lg transition duration-300 group-hover:scale-110"
             />
           ) : (
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500 text-lg font-bold text-black shadow-lg">
@@ -146,9 +146,9 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
             </p>
 
             <div className="mt-3">
-              <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
-                {project.category}
-              </span>
+              <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+  {project.category}
+</span>
             </div>
           </div>
         </div>

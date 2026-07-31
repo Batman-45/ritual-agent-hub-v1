@@ -128,19 +128,33 @@ export default function Home() {
       Ritual Ecosystem Directory
     </span>
 
-    <h1 className="mt-8 max-w-5xl text-6xl font-black leading-tight">
-      Discover the next generation of
-      <span className="text-emerald-400"> AI Agents</span>
-      <br />
-      built on Ritual.
-    </h1>
+    <h1 className="mt-8 max-w-6xl text-7xl font-black leading-tight">
+  Discover Everything
+  <span className="text-emerald-400">
+    {" "}Built on Ritual
+  </span>
+</h1>
 
     <p className="mt-6 max-w-3xl text-xl leading-8 text-zinc-400">
-      Explore AI agents, infrastructure, developer tools and
-      community projects built on Ritual.
-    </p>
+  Explore AI agents, developer tools, infrastructure, DeFi applications, and community projects powering the Ritual ecosystem.
+</p>
 
-    <div className="relative mt-10 max-w-2xl">
+    <div className="relative mt-10 max-w-3xl">
+      <div className="mt-8 flex flex-wrap gap-4">
+  <a
+    href="/submit"
+    className="rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-6 py-3 font-semibold text-black transition hover:scale-105"
+  >
+    🚀 Submit Project
+  </a>
+
+  <a
+    href="#projects"
+    className="rounded-2xl border border-zinc-700 px-6 py-3 font-semibold text-white transition hover:border-emerald-500"
+  >
+    🔍 Explore Projects
+  </a>
+</div>
 
       <Search
         size={22}
@@ -277,9 +291,11 @@ export default function Home() {
 
 </section>
 
-{/* Explore Projects */}
-
-<section className="mx-auto max-w-7xl px-6 pb-24">
+{/* All Projects */}
+<section
+  id="projects"
+  className="mx-auto max-w-7xl px-6 pb-24"
+>
 
   <div className="mb-10">
 

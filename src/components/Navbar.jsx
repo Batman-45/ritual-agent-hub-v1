@@ -54,14 +54,15 @@ export default function Navbar() {
           />
 
           <div>
-            <h1 className="text-xl font-bold text-white">
-              Ritual Agent Hub
-            </h1>
+  <h1 className="text-2xl font-black tracking-tight">
+    Ritual
+    <span className="text-emerald-400"> Agent Hub</span>
+  </h1>
 
-            <p className="text-xs text-emerald-400">
-              Built for the Ritual Ecosystem
-            </p>
-          </div>
+  <p className="text-xs text-zinc-500">
+    Discover • Build • Explore
+  </p>
+</div>
         </Link>
 
         {/* Desktop Nav */}

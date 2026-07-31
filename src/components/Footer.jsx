@@ -32,12 +32,12 @@ export default function Footer() {
               <div>
 
                 <h2 className="text-xl font-bold text-white">
-                  Ritual Directory
-                </h2>
+  Ritual Agent Hub
+</h2>
 
-                <p className="text-sm text-zinc-500">
-                  Discover AI Projects
-                </p>
+<p className="text-sm text-emerald-400">
+  Discover • Build • Explore
+</p>
 
               </div>
 
@@ -155,22 +155,18 @@ export default function Footer() {
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-zinc-800 pt-8 md:flex-row">
 
           <p className="text-sm text-zinc-500">
-            © {year} Ritual Directory. All rights reserved.
-          </p>
+  © {year} Ritual Agent Hub. All rights reserved.
+</p>
 
-          <p className="flex items-center gap-2 text-sm text-zinc-500">
-
-            Built with
-
-            <Heart
-              size={16}
-              className="text-red-500"
-              fill="currentColor"
-            />
-
-            for the Ritual ecosystem
-
-          </p>
+<p className="flex items-center gap-2 text-sm text-zinc-500">
+  Built with
+  <Heart
+    size={16}
+    className="text-red-500"
+    fill="currentColor"
+  />
+  for the Ritual Ecosystem • React • Supabase • Vercel
+</p>
 
         </div>
 
