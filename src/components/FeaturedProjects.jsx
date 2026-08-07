@@ -7,24 +7,23 @@ export default function FeaturedProjects() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    async function loadProjects() {
+      const { data, error } = await supabase
+        .from("Projects")
+        .select("*")
+        .eq("featured", true)
+        .eq("status", "approved")
+        .order("likes", { ascending: false })
+        .limit(6);
+
+      if (!error) {
+        setProjects(data || []);
+      }
+
+      setLoading(false);
+    }
     loadProjects();
   }, []);
-
-  async function loadProjects() {
-    const { data, error } = await supabase
-      .from("Projects")
-      .select("*")
-      .eq("featured", true)
-      .eq("status", "approved")
-      .order("likes", { ascending: false })
-      .limit(6);
-
-    if (!error) {
-      setProjects(data || []);
-    }
-
-    setLoading(false);
-  }
 
   if (loading) {
     return (

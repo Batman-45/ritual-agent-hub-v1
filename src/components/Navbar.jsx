@@ -1,21 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Menu, X, Plus, Search } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, Search, LayoutDashboard, Bookmark, LogOut, Sun, Moon, Monitor } from "lucide-react";
 
 import logo from "../assets/ritual-logo.png";
+import { useTheme } from "../context/ThemeContext";
 
-import {
-  signInWithGitHub,
-  signOut,
-  getCurrentUser,
-} from "../services/supabase";
+import { signOut, getCurrentUser } from "../services/supabase";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     loadUser();
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   async function loadUser() {
@@ -29,9 +32,11 @@ export default function Navbar() {
   }
 
   const navItems = [
-    { name: "Explore", href: "/" },
-    { name: "Projects", href: "/#projects" },
-    { name: "Agents", href: "/#agents" },
+    { name: "Home", href: "/" },
+    { name: "Explore", href: "/search" },
+    { name: "Builders", href: "/builders" },
+    { name: "Leaderboard", href: "/leaderboard" },
+    { name: "Analytics", href: "/analytics" },
   ];
 
   const avatar =
@@ -41,194 +46,203 @@ export default function Navbar() {
       user?.user_metadata?.user_name || user?.email || "User"
     )}&background=10b981&color=fff`;
 
-  return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#09090B]/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-        {/* Logo */}
+  const desktopNavClass = ({ isActive }) =>
+    `text-sm font-semibold transition-colors duration-200 hover:text-emerald-400 ${
+      isActive ? "text-emerald-400" : "text-zinc-400"
+    }`;
 
-        <Link to="/" className="flex items-center gap-4">
+  const toggleTheme = () => {
+    const themes = ["light", "dark", "system"];
+    const nextTheme = themes[(themes.indexOf(theme) + 1) % themes.length];
+    setTheme(nextTheme);
+  };
+
+  return (
+    <header className={`sticky top-0 z-50 transition-all duration-300 border-b ${isScrolled ? "bg-[#09090B]/80 backdrop-blur-md border-zinc-800" : "bg-transparent border-transparent"}`}>
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-3">
           <img
             src={logo}
             alt="Ritual Logo"
-            className="h-12 w-12 rounded-xl object-contain"
+            className="h-10 w-10 rounded-xl object-contain sm:h-12 sm:w-12"
           />
 
-          <div>
-  <h1 className="text-2xl font-black tracking-tight">
-    Ritual
-    <span className="text-emerald-400"> Agent Hub</span>
-  </h1>
-
-  <p className="text-xs text-zinc-500">
-    Discover • Build • Explore
-  </p>
-</div>
+          <h1 className="text-xl font-black tracking-tight text-white sm:text-2xl">
+            Ritual <span className="text-emerald-400">Agent Hub</span>
+          </h1>
         </Link>
 
         {/* Desktop Nav */}
-
         <nav className="hidden items-center gap-8 md:flex">
           {navItems.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.href}
-              className={({ isActive }) =>
-                isActive
-                  ? "text-sm font-medium text-emerald-400"
-                  : "text-sm font-medium text-zinc-400 hover:text-white"
-              }
-            >
+            <NavLink key={item.name} to={item.href} end={item.href === "/"} className={desktopNavClass}>
               {item.name}
             </NavLink>
           ))}
         </nav>
 
         {/* Desktop Right */}
-
         <div className="hidden items-center gap-4 md:flex">
-          <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900">
-            <Search size={18} />
+          <button 
+            onClick={toggleTheme}
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50 transition hover:border-emerald-400 hover:bg-zinc-800"
+          >
+            {theme === 'light' ? <Sun size={18} /> : theme === 'dark' ? <Moon size={18} /> : <Monitor size={18} />}
           </button>
+          
+          <Link
+            to="/search"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50 transition hover:border-emerald-400 hover:bg-zinc-800"
+          >
+            <Search size={18} />
+          </Link>
 
           {user ? (
-            <>
-              <>
-  <img
-    src={
-      user?.user_metadata?.avatar_url ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(
-        user?.email || "User"
-      )}`
-    }
-    alt="Avatar"
-    className="h-10 w-10 rounded-full object-cover"
-  />
+            <div className="relative group">
+              <button className="flex cursor-pointer items-center gap-3 rounded-full p-1 pr-4 hover:bg-zinc-800 transition">
+                <img
+                  src={avatar}
+                  alt="Avatar"
+                  className="h-10 w-10 rounded-full border border-zinc-700 object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      user?.email || "User"
+                    )}&background=10b981&color=fff`;
+                  }}
+                />
 
-  <Link
-    to="/my-projects"
-    className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-white hover:border-emerald-500"
-  >
-    My Projects
-  </Link>
+                <span className="font-medium text-zinc-300 text-sm hidden lg:block">
+                  {user?.user_metadata?.user_name || user?.email?.split("@")[0]}
+                </span>
+              </button>
 
-  <Link
-    to="/profile"
-    className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-white hover:border-emerald-500"
-  >
-    Profile
-  </Link>
-  <Link
-  to="/dashboard"
-  className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-white hover:border-emerald-500"
->
-  Dashboard
-</Link>
+              <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-zinc-800 bg-zinc-900 p-2 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition">
+                <Link
+                  to="/dashboard"
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+                >
+                  <LayoutDashboard size={18} className="text-emerald-400" />
+                  Dashboard
+                </Link>
+                <Link
+                  to="/bookmarks"
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+                >
+                  <Bookmark size={18} className="text-yellow-400" />
+                  Bookmarks
+                </Link>
 
-  <Link
-    to="/submit"
-    className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-5 py-3 text-sm font-semibold text-black transition hover:scale-105"
-  >
-    <Plus size={18} />
-    Submit Project
-  </Link>
-
-  <button
-    onClick={handleLogout}
-    className="rounded-xl border border-red-500 px-4 py-2 text-sm text-red-400 hover:bg-red-500 hover:text-white"
-  >
-    Logout
-  </button>
-</>
-            </>
+                <button
+                  onClick={handleLogout}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-red-500/10 py-3 text-sm font-semibold text-red-400 hover:bg-red-500 hover:text-white transition"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              </div>
+            </div>
           ) : (
-            <button
-              onClick={signInWithGitHub}
-              className="rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-5 py-3 text-sm font-semibold text-black"
+            <Link
+              to="/login"
+              className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-emerald-400"
             >
-              Login with GitHub
-            </button>
+              Sign In
+            </Link>
           )}
         </div>
 
         {/* Mobile Menu Button */}
-
         <button
           onClick={() => setOpen(!open)}
-          className="rounded-xl border border-zinc-800 bg-zinc-900 p-2 md:hidden"
+          className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-2 md:hidden"
+          aria-label={open ? "Close menu" : "Open menu"}
         >
           {open ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
       {/* Mobile Menu */}
-
-      {open && (
-        <div className="border-t border-zinc-800 bg-[#09090B] md:hidden">
-          <div className="space-y-2 p-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                onClick={() => setOpen(false)}
-                className="block rounded-xl px-4 py-3 text-zinc-300 hover:bg-zinc-900 hover:text-white"
-              >
-                {item.name}
-              </Link>
-            ))}
-
-            {user ? (
-              <>
-                <div className="flex items-center gap-3 rounded-xl border border-zinc-800 p-3">
-                  <img
-                    src={avatar}
-                    alt="Avatar"
-                    className="h-10 w-10 rounded-full object-cover border border-zinc-700"
-                    onError={(e) => {
-                      e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        user?.email || "User"
-                      )}&background=10b981&color=fff`;
-                    }}
-                  />
-
-                  <div>
-                    <p className="text-sm font-semibold text-white">
-                      {user?.user_metadata?.user_name ||
-                        user?.email?.split("@")[0]}
-                    </p>
-
-                    <p className="text-xs text-zinc-400">
-                      Logged in
-                    </p>
-                  </div>
-                </div>
-
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="border-t border-zinc-800 bg-[#09090B] md:hidden overflow-hidden"
+          >
+            <div className="space-y-2 p-6">
+              {navItems.map((item) => (
                 <Link
-                  to="/submit"
+                  key={item.name}
+                  to={item.href}
                   onClick={() => setOpen(false)}
-                  className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 py-3 font-semibold text-black"
+                  className="block rounded-xl px-4 py-3 text-zinc-300 transition hover:bg-zinc-900 hover:text-white font-medium"
                 >
-                  <Plus size={18} />
-                  Submit Project
+                  {item.name}
                 </Link>
-
-                <button
-                  onClick={handleLogout}
-                  className="w-full rounded-xl border border-zinc-700 py-3 text-white hover:border-red-500"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={signInWithGitHub}
-                className="mt-4 w-full rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 py-3 font-semibold text-black"
-              >
-                Login with GitHub
+              ))}
+              
+              <button onClick={toggleTheme} className="flex items-center gap-3 rounded-xl px-4 py-3 text-zinc-300 transition hover:bg-zinc-900 hover:text-white font-medium">
+                  {theme === 'light' ? <Sun size={18} /> : theme === 'dark' ? <Moon size={18} /> : <Monitor size={18} />} Toggle Theme
               </button>
-            )}
-          </div>
-        </div>
-      )}
+
+              {user ? (
+                <>
+                  <div className="flex items-center gap-3 rounded-xl border border-zinc-800 p-3 mt-4">
+                    <img
+                      src={avatar}
+                      alt="Avatar"
+                      className="h-10 w-10 rounded-full border border-zinc-700 object-cover"
+                    />
+
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        {user?.user_metadata?.user_name || user?.email?.split("@")[0]}
+                      </p>
+
+                      <p className="text-xs text-zinc-400">Logged in</p>
+                    </div>
+                  </div>
+
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
+                  >
+                    <LayoutDashboard size={18} className="text-emerald-400" />
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/bookmarks"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
+                  >
+                    <Bookmark size={18} className="text-yellow-400" />
+                    Bookmarks
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 py-3 text-white transition hover:border-red-500 hover:bg-red-500/10"
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-xl bg-emerald-500 px-5 py-3 text-center text-sm font-semibold text-black transition hover:bg-emerald-400 mt-4"
+                >
+                  Login
+                </Link>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

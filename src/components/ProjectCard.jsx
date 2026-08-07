@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   Globe,
   MessageCircle,
@@ -11,7 +12,10 @@ import {
   Trash2,
   Pencil,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { supabase } from "../services/supabase";
+import { getBuilderBadges } from "../utils/builderBadges.jsx";
+import { Badge } from "./Badge.jsx";
 
 function formatNumber(num = 0) {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -20,14 +24,64 @@ function formatNumber(num = 0) {
 }
 
 export default function ProjectCard({ project, onEdit, onDelete }) {
+ 
+  const [saved, setSaved] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    async function checkBookmark() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("Bookmarks")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("project_id", project.id)
+        .maybeSingle();
+      setSaved(!!data);
+    }
+    checkBookmark();
+  }, [project.id]);
+
+  async function toggleBookmark() {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      toast.error("Please login to bookmark projects.");
+      return;
+    }
+
+    if (saved) {
+      const { error } = await supabase
+        .from("Bookmarks")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("project_id", project.id);
+
+      if (!error) {
+        setSaved(false);
+        toast.success("Bookmark removed.");
+      } else {
+        toast.error(error.message);
+      }
+    } else {
+      const { error } = await supabase
+        .from("Bookmarks")
+        .insert({ user_id: user.id, project_id: project.id });
+
+      if (!error) {
+        setSaved(true);
+        toast.success("Project bookmarked!");
+      } else {
+        toast.error(error.message);
+      }
+    }
+  }
 
   const [likes, setLikes] = useState(project.likes || 0);
   const [loading, setLoading] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [bannerError, setBannerError] = useState(false);
-
-  const likedKey = `project-liked-${project.id}`;
 
   const initials = useMemo(() => {
     return (project.name || "Project")
@@ -48,36 +102,107 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
       .filter(Boolean);
   }, [project.tags]);
 
+  const [isLiked, setIsLiked] = useState(false);
+
+  useEffect(() => {
+    async function checkLike() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("Likes")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("project_id", project.id)
+        .maybeSingle();
+      setIsLiked(!!data);
+    }
+    checkLike();
+  }, [project.id]);
+
   async function handleLike(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (loading) return;
-    if (localStorage.getItem(likedKey)) return;
-
-    setLoading(true);
-
-    const newLikes = likes + 1;
-
-    const { error } = await supabase
-      .from("Projects")
-      .update({ likes: newLikes })
-      .eq("id", project.id);
-
-    if (!error) {
-      setLikes(newLikes);
-      localStorage.setItem(likedKey, "true");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        toast.error("Please login to like projects.");
+        return;
     }
 
-    setLoading(false);
+    if (loading) return; // Prevent multiple concurrent clicks
+    setLoading(true);
+
+    try {
+      if (isLiked) {
+          // Unlike
+          const { error: delError } = await supabase
+              .from("Likes")
+              .delete()
+              .eq("user_id", user.id)
+              .eq("project_id", project.id);
+          
+          if (delError) throw delError;
+
+          const { error: updError } = await supabase
+              .from("Projects")
+              .update({ likes: Math.max(0, likes - 1) })
+              .eq("id", project.id);
+          
+          if (updError) throw updError;
+
+          setIsLiked(false);
+          setLikes(prev => Math.max(0, prev - 1));
+          toast.success("Like removed.");
+      } else {
+          // Like
+          const { error: insError } = await supabase
+              .from("Likes")
+              .insert({ user_id: user.id, project_id: project.id });
+          
+          if (insError) throw insError;
+
+          const { error: updError } = await supabase
+              .from("Projects")
+              .update({ likes: likes + 1 })
+              .eq("id", project.id);
+          
+          if (updError) throw updError;
+
+          setIsLiked(true);
+          setLikes(prev => prev + 1);
+          toast.success("Project liked!");
+      }
+    } catch (error) {
+      toast.error("Failed to update like status.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }
 
+  const badges = useMemo(() => getBuilderBadges({
+    likes: project.likes,
+    projects: [project],
+    is_verified: project.verified
+  }), [project]);
+
   return (
-    <div
-  onClick={() => navigate(`/project/${project.id}`)}
-  className="group cursor-pointer overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-xl transition-all duration-500 hover:-translate-y-3 hover:scale-[1.02] hover:border-emerald-400 hover:shadow-[0_20px_60px_rgba(16,185,129,0.25)]"
->
-  {/* Banner */}
+    <motion.div
+      whileHover={{ y: -8 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      role="button"
+      tabIndex={0}
+      onClick={() => navigate(`/project/${project.id}`)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          navigate(`/project/${project.id}`);
+        }
+      }}
+      aria-label={`View project: ${project.name}`}
+      className="group flex flex-col cursor-pointer overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-xl transition-all duration-300 hover:border-emerald-500/50 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] focus-visible:border-emerald-400"
+    >
+      {/* Banner */}
       <div className="relative h-48 overflow-hidden">
         {project.image && !bannerError ? (
           <img
@@ -132,23 +257,26 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
               {project.name}
             </h2>
 
-            <p className="mt-1 text-sm text-zinc-400">
-              by{" "}
-              <span
-  onClick={(e) => {
-    e.stopPropagation();
-    navigate(`/builder/${encodeURIComponent(project.builder)}`);
-  }}
-  className="cursor-pointer font-medium text-emerald-400 hover:underline"
->
-  {project.builder || "Unknown Builder"}
-</span>
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-sm text-zinc-400">
+                by{" "}
+                <Link
+                  to={`/builder/${encodeURIComponent(project.builder || "Unknown Builder")}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="font-medium text-emerald-400 hover:underline"
+                >
+                  {project.builder || "Unknown Builder"}
+                </Link>
+              </p>
+              <div className="flex gap-1">
+                {badges.map((b) => <Badge key={b.label} {...b} />)}
+              </div>
+            </div>
 
             <div className="mt-3">
               <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-  {project.category}
-</span>
+                {project.category}
+              </span>
             </div>
           </div>
         </div>
@@ -176,7 +304,7 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
           </div>
         )}
 
-        <div className="mt-6 flex items-center justify-between border-t border-zinc-800 pt-5">
+        <div className="mt-6 flex flex-col gap-4 border-t border-zinc-800 pt-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-2 text-sm text-zinc-400">
               <Eye size={16} />
@@ -194,6 +322,27 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleBookmark();
+              }}
+              className={`rounded-xl border px-3 py-2 text-sm transition ${
+                saved
+                  ? "border-yellow-500 bg-yellow-500 text-black"
+                  : "border-yellow-500 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-black"
+              }`}
+            >
+              {saved ? "Saved" : "Save"}
+            </button>
+<Link
+  to={`/project/${project.id}`}
+  onClick={(e) => e.stopPropagation()}
+  className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-400"
+>
+  View
+</Link>
             {project.website && (
               <a
                 href={project.website}
@@ -258,6 +407,6 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -27,30 +27,32 @@ export default function BuilderProfile() {
   }, [builder]);
 
   async function loadBuilder() {
-    setLoading(true);
+  setLoading(true);
 
-    const builderName = decodeURIComponent(builder);
+  const builderName = decodeURIComponent(builder);
 
-    const { data: builderData } = await supabase
-      .from("Builders")
-      .select("*")
-      .eq("name", builderName)
-      .single();
+  const { data: projectData, error } = await supabase
+    .from("Projects")
+    .select("*")
+    .eq("builder", builderName)
+    .eq("status", "Active")
+    .order("created_at", { ascending: false });
 
-    const { data: projectData } = await supabase
-      .from("Projects")
-      .select("*")
-      .eq("builder", builderName)
-      .order("created_at", {
-        ascending: false,
-      });
-
-    setProfile(builderData);
+  if (!error) {
     setProjects(projectData || []);
 
-    setLoading(false);
+    setProfile({
+      name: builderName,
+      bio: "Ritual ecosystem builder",
+      verified: true,
+      avatar: null,
+      website: null,
+      github: null,
+    });
   }
 
+  setLoading(false);
+}
   const totalLikes = projects.reduce(
     (sum, p) => sum + (p.likes || 0),
     0
@@ -82,7 +84,7 @@ export default function BuilderProfile() {
     );
   }
 
-  if (!profile) {
+  if (!profile && projects.length === 0) {
     return (
       <div className="min-h-screen bg-[#09090B] text-white">
         <Navbar />
@@ -268,37 +270,38 @@ export default function BuilderProfile() {
 
 </div>
 
-<div className="mt-10 grid gap-8 md:grid-cols-2 xl:grid-cols-3"></div>
-{projects.length === 0 ? (
+<div className="mt-10 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+  {projects.length === 0 ? (
 
-  <div className="col-span-full rounded-3xl border border-dashed border-zinc-700 py-20 text-center">
+    <div className="col-span-full rounded-3xl border border-dashed border-zinc-700 py-20 text-center">
 
-    <h3 className="text-3xl font-bold">
-      No Projects Yet
-    </h3>
+      <h3 className="text-3xl font-bold">
+        No Projects Yet
+      </h3>
 
-    <p className="mt-4 text-zinc-500">
-      This builder hasn't published any projects yet.
-    </p>
+      <p className="mt-4 text-zinc-500">
+        This builder hasn't published any projects yet.
+      </p>
 
-  </div>
+    </div>
 
-) : (
+  ) : (
 
-  projects.map((project) => (
-    <ProjectCard
-      key={project.id}
-      project={project}
-    />
-  ))
+    projects.map((project) => (
+      <ProjectCard
+        key={project.id}
+        project={project}
+      />
+    ))
 
-)}
-
+  )}
 </div>
 
-</main>
+        </div>
 
-<Footer />
+      </main>
+
+      <Footer />
 
 </div>
 );

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { User, CheckCircle, ArrowRight } from "lucide-react";
+import { CheckCircle, ArrowRight } from "lucide-react";
 import { supabase } from "../services/supabase";
 
 export default function FeaturedBuilders() {
@@ -8,21 +8,20 @@ export default function FeaturedBuilders() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    async function loadBuilders() {
+      const { data, error } = await supabase
+        .from("Builders")
+        .select("*")
+        .limit(6);
+
+      if (!error) {
+        setBuilders(data || []);
+      }
+
+      setLoading(false);
+    }
     loadBuilders();
   }, []);
-
-  async function loadBuilders() {
-    const { data, error } = await supabase
-      .from("Builders")
-      .select("*")
-      .limit(6);
-
-    if (!error) {
-      setBuilders(data || []);
-    }
-
-    setLoading(false);
-  }
 
   if (loading) {
     return (

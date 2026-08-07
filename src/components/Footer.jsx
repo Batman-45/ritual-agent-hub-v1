@@ -1,10 +1,6 @@
-import {
-  Globe,
-  Heart,
-  Sparkles,
-  GitBranch,
-  MessageCircle,
-} from "lucide-react";
+import { Link } from "react-router-dom";
+import { Globe, MessageCircle, Star } from "lucide-react";
+
 export default function Footer() {
   const year = new Date().getFullYear();
 
@@ -12,138 +8,112 @@ export default function Footer() {
     <footer className="mt-24 border-t border-zinc-800 bg-[#09090B]">
       <div className="mx-auto max-w-7xl px-6 py-16">
 
-        <div className="grid gap-12 md:grid-cols-4">
+        <div className="grid gap-12 lg:grid-cols-4">
 
           {/* Brand */}
+          <div className="lg:col-span-2">
 
-          <div>
-
-            <div className="mb-5 flex items-center gap-3">
-
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-400">
-
-                <Sparkles
-                  className="text-black"
-                  size={22}
-                />
-
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500">
+               <Star className="h-6 w-6 text-black" />
               </div>
 
               <div>
+                <h2 className="text-2xl font-black text-white">
+                  Ritual Agent Hub
+                </h2>
 
-                <h2 className="text-xl font-bold text-white">
-  Ritual Agent Hub
-</h2>
-
-<p className="text-sm text-emerald-400">
-  Discover • Build • Explore
-</p>
-
+                <p className="text-sm text-emerald-400">
+                  Community Directory
+                </p>
               </div>
-
             </div>
 
-            <p className="max-w-sm leading-7 text-zinc-400">
-              Explore the growing Ritual ecosystem.
-              Find AI projects, autonomous agents,
-              infrastructure and developer tools.
+            <p className="mt-6 max-w-md leading-7 text-zinc-400">
+              Discover, explore and bookmark every project being built across
+              the Ritual ecosystem in one beautiful community directory.
             </p>
 
           </div>
 
-          {/* Navigation */}
-
+          {/* Explore */}
           <div>
 
-            <h3 className="mb-5 font-semibold text-white">
+            <h3 className="mb-5 text-lg font-bold text-white">
               Explore
             </h3>
 
-            <ul className="space-y-3 text-zinc-400">
+            <div className="space-y-3">
 
-              <li>
-                <a href="#projects" className="hover:text-white">
-                  Projects
-                </a>
-              </li>
+              <Link
+                to="/"
+                className="block text-zinc-400 transition hover:text-emerald-400"
+              >
+                Home
+              </Link>
 
-              <li>
-                <a href="#agents" className="hover:text-white">
-                  Agents
-                </a>
-              </li>
+              <Link
+                to="/builders"
+                className="block text-zinc-400 transition hover:text-emerald-400"
+              >
+                Builders
+              </Link>
 
-              <li>
-                <a href="/" className="hover:text-white">
-                  Categories
-                </a>
-              </li>
+              <Link
+                to="/leaderboard"
+                className="block text-zinc-400 transition hover:text-emerald-400"
+              >
+                Leaderboard
+              </Link>
 
-            </ul>
+              <Link
+                to="/analytics"
+                className="block text-zinc-400 transition hover:text-emerald-400"
+              >
+                Analytics
+              </Link>
 
-          </div>
-
-          {/* Developers */}
-
-          <div>
-
-            <h3 className="mb-5 font-semibold text-white">
-              Developers
-            </h3>
-
-            <ul className="space-y-3 text-zinc-400">
-
-              <li>
-                <a href="/" className="hover:text-white">
-                  Documentation
-                </a>
-              </li>
-
-              <li>
-                <a href="/" className="hover:text-white">
-                  API
-                </a>
-              </li>
-
-              <li>
-                <a href="/" className="hover:text-white">
-                  Submit Project
-                </a>
-              </li>
-
-            </ul>
+            </div>
 
           </div>
 
-          {/* Social */}
-
+          {/* Community */}
           <div>
 
-            <h3 className="mb-5 font-semibold text-white">
+            <h3 className="mb-5 text-lg font-bold text-white">
               Community
             </h3>
 
-            <div className="flex gap-4">
+            <div className="space-y-4">
 
               <a
-                href="/"
-                className="rounded-xl border border-zinc-800 bg-zinc-900 p-3 transition hover:border-emerald-500"
+                href="https://github.com"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 text-zinc-400 transition hover:text-white"
+              >
+               <Globe size={18} />
+                GitHub
+              </a>
+
+              <a
+                href="https://discord.gg"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 text-zinc-400 transition hover:text-white"
               >
                 <MessageCircle size={18} />
+                Discord
               </a>
 
               <a
-                href="/"
-                className="rounded-xl border border-zinc-800 bg-zinc-900 p-3 transition hover:border-emerald-500"
+                href="https://x.com"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 text-zinc-400 transition hover:text-white"
               >
-                <GitBranch size={18} />
-              </a>
-
-              <a
-                href="/"
-                className="rounded-xl border border-zinc-800 bg-zinc-900 p-3 transition hover:border-emerald-500"
-              >
-                <Globe size={18} />
+                <Star size={18} />
+                Twitter / X
               </a>
 
             </div>
@@ -152,21 +122,15 @@ export default function Footer() {
 
         </div>
 
-        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-zinc-800 pt-8 md:flex-row">
+        <div className="mt-14 flex flex-col items-center justify-between gap-5 border-t border-zinc-800 pt-8 text-sm text-zinc-500 md:flex-row">
 
-          <p className="text-sm text-zinc-500">
-  © {year} Ritual Agent Hub. All rights reserved.
-</p>
+          <p>
+            © {year} Ritual Agent Hub. All rights reserved.
+          </p>
 
-<p className="flex items-center gap-2 text-sm text-zinc-500">
-  Built with
-  <Heart
-    size={16}
-    className="text-red-500"
-    fill="currentColor"
-  />
-  for the Ritual Ecosystem • React • Supabase • Vercel
-</p>
+          <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-emerald-400">
+            Powered by Ritual
+          </div>
 
         </div>
 

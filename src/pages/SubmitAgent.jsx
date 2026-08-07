@@ -6,15 +6,17 @@ import {
   Send,
 } from "lucide-react";
 
+import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { supabase } from "../services/supabase";
-
+import { uploadImage } from "../services/storage";
 export default function SubmitAgent() {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
-
+  const [logoFile, setLogoFile] = useState(null);
+const [bannerFile, setBannerFile] = useState(null);
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -43,57 +45,86 @@ export default function SubmitAgent() {
   }
 
   async function handleSubmit(e) {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!form.name.trim()) {
-      alert("Project name is required.");
-      return;
+  if (!form.name.trim()) {
+    toast.error("Project name is required.");
+    return;
+  }
+
+  if (!form.description.trim()) {
+    toast.error("Description is required.");
+    return;
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    toast.error("Please login with GitHub first.");
+    navigate("/");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    let logoUrl = form.logo;
+    let bannerUrl = form.image;
+
+    if (logoFile) {
+      logoUrl = await uploadImage(
+        logoFile,
+        "project-logos"
+      );
     }
 
-    if (!form.description.trim()) {
-      alert("Description is required.");
-      return;
+    if (bannerFile) {
+      bannerUrl = await uploadImage(
+        bannerFile,
+        "project-banners"
+      );
     }
-    const {
-  data: { user },
-} = await supabase.auth.getUser();
-
-if (!user) {
-  alert("Please login with GitHub first.");
-  setLoading(false);
-  navigate("/login");
-  return;
-}
-
-    setLoading(true);
 
     const projectData = {
-  ...form,
-  launch_date: form.launch_date ? form.launch_date : null,
-  owner_id: user.id,
-  featured: false,
-  verified: false,
-  likes: 0,
-  views: 0,
-};
+      ...form,
+      logo: logoUrl,
+      image: bannerUrl,
+      launch_date: form.launch_date || null,
+      owner_id: user.id,
+      featured: false,
+      verified: false,
+      likes: 0,
+      views: 0,
+    };
 
-const { data, error } = await supabase
-  .from("Projects")
-  .insert([projectData])
-  .select()
-  .single();
-
-    setLoading(false);
+    const { data, error } = await supabase
+      .from("Projects")
+      .insert([projectData])
+      .select()
+      .single();
 
     if (error) {
-      alert(error.message);
+      toast.error(error.message);
       return;
     }
 
-    alert("Project submitted successfully!");
+    if (!data) {
+      toast.error("Failed to create project. Please try again.");
+      return;
+    }
 
+    toast.success("Project submitted successfully!");
     navigate(`/project/${data.id}`);
+   
+  } catch (err) {
+    toast.error(err.message);
+  } finally {
+    setLoading(false);
   }
+}
+   
     return (
     <>
       <Navbar />
@@ -144,7 +175,7 @@ const { data, error } = await supabase
                   name="name"
                   value={form.name}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500 text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500"
+                  className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20"
                   placeholder="Ritual Studio"
                 />
               </div>
@@ -160,7 +191,7 @@ const { data, error } = await supabase
     value={form.description}
     onChange={handleChange}
     placeholder="Describe your project..."
-    className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500"
+    className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20"
   />
 </div>
 
@@ -267,21 +298,49 @@ const { data, error } = await supabase
               </div>
                             <div className="grid gap-6 md:grid-cols-2">
 
-                <input
-                  name="logo"
-                  value={form.logo}
-                  onChange={handleChange}
-                  placeholder="Logo URL (optional)"
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500"
-                />
+                <div>
+  <label className="mb-2 block text-sm text-zinc-400">
+    Project Logo
+  </label>
 
-                <input
-                  name="image"
-                  value={form.image}
-                  onChange={handleChange}
-                  placeholder="Banner URL (optional)"
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-500"
-                />
+  <input
+  type="file"
+  accept="image/*"
+  onChange={(e) => {
+    const file = e.target.files[0];
+    setLogoFile(file);
+
+    if (file) {
+      setForm((prev) => ({
+        ...prev,
+        logo: URL.createObjectURL(file),
+      }));
+    }
+  }}
+/>
+</div>
+
+<div>
+  <label className="mb-2 block text-sm text-zinc-400">
+    Banner Image
+  </label>
+
+  <input
+  type="file"
+  accept="image/*"
+  onChange={(e) => {
+    const file = e.target.files[0];
+    setBannerFile(file);
+
+    if (file) {
+      setForm((prev) => ({
+        ...prev,
+        image: URL.createObjectURL(file),
+      }));
+    }
+  }}
+/>
+</div>
 
               </div>
 

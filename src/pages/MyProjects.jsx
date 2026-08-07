@@ -8,7 +8,6 @@ import {
   FolderGit2,
   Search,
   Plus,
-  Filter,
 } from "lucide-react";
 
 import Navbar from "../components/Navbar";
@@ -157,7 +156,7 @@ export default function MyProjects() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search projects..."
-                className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 py-4 pl-12 pr-4 outline-none focus:border-emerald-500"
+                className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 py-4 pl-12 pr-4 text-white placeholder:text-zinc-500 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/20"
               />
 
             </div>
@@ -165,7 +164,7 @@ export default function MyProjects() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4"
+              className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-white outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/20"
             >
               {categories.map((item) => (
                 <option key={item}>

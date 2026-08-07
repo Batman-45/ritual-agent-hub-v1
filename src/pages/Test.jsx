@@ -11,9 +11,6 @@ export default function Test() {
         .from("Projects") // Your table name
         .select("*");
 
-      console.log("DATA:", data);
-      console.log("ERROR:", error);
-
       if (error) {
         console.error("Supabase Error:", error);
       } else {

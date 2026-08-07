@@ -1,38 +1,22 @@
+import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Search,
-  Sparkles,
-  Boxes,
-  Users,
-  Heart,
-  Eye,
-} from "lucide-react";
+import { Users, Flame, Heart, Eye, Boxes, Layers, Star, SearchX } from "lucide-react";
+import { motion } from "framer-motion";
+import { supabase } from "../services/supabase";
 
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import Hero from "../components/Hero";
+import SearchBar from "../components/SearchBar";
 import ProjectCard from "../components/ProjectCard";
-import { supabase } from "../services/supabase";
+import LoadingCards from "../components/LoadingCards";
+import Footer from "../components/Footer";
 
 export default function Home() {
   const [projects, setProjects] = useState([]);
+  const [builders, setBuilders] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [featuredProjects, setFeaturedProjects] = useState([]);
-  const [trendingProjects, setTrendingProjects] = useState([]);
-  const [latestProjects, setLatestProjects] = useState([]);
-
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
-
-  const categories = [
-    "All",
-    "AI",
-    "Agent",
-    "Infrastructure",
-    "Developer Tools",
-    "Gaming",
-    "DeFi",
-  ];
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   useEffect(() => {
     loadProjects();
@@ -44,30 +28,37 @@ export default function Home() {
     const { data, error } = await supabase
       .from("Projects")
       .select("*")
+      .eq("status", "Active")
       .order("created_at", { ascending: false });
 
-    if (!error) {
-      const list = data || [];
+    if (error) {
+      console.error(error);
+      setProjects([]);
+    } else {
+      setProjects(data || []);
 
-      setProjects(list);
+      const stats = {};
 
-      setFeaturedProjects(
-        list.filter((p) => p.featured).slice(0, 3)
-      );
+      (data || []).forEach((project) => {
+        const name = project.builder || "Unknown";
 
-      setTrendingProjects(
-        [...list]
-          .sort((a, b) => (b.views || 0) - (a.views || 0))
-          .slice(0, 6)
-      );
+        if (!stats[name]) {
+          stats[name] = {
+            name,
+            projects: 0,
+            likes: 0,
+            views: 0,
+          };
+        }
 
-      setLatestProjects(
-        [...list]
-          .sort(
-            (a, b) =>
-              new Date(b.created_at) -
-              new Date(a.created_at)
-          )
+        stats[name].projects += 1;
+        stats[name].likes += project.likes || 0;
+        stats[name].views += project.views || 0;
+      });
+
+      setBuilders(
+        Object.values(stats)
+          .sort((a, b) => b.likes - a.likes)
           .slice(0, 6)
       );
     }
@@ -75,6 +66,24 @@ export default function Home() {
     setLoading(false);
   }
 
+  const categories = useMemo(() => {
+    return [
+      "All",
+      ...new Set(
+        projects
+          .map((p) => p.category)
+          .filter(Boolean)
+      ),
+    ];
+  }, [projects]);
+
+  const featuredProjects = projects.filter((p) => p.featured);
+const recentProjects = [...projects]
+  .sort(
+    (a, b) =>
+      new Date(b.created_at) - new Date(a.created_at)
+  )
+  .slice(0, 6);
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
       const q = search.toLowerCase();
@@ -82,281 +91,234 @@ export default function Home() {
       const matchesSearch =
         project.name?.toLowerCase().includes(q) ||
         project.description?.toLowerCase().includes(q) ||
-        project.builder?.toLowerCase().includes(q) ||
-        project.category?.toLowerCase().includes(q);
+        project.category?.toLowerCase().includes(q) ||
+        project.type?.toLowerCase().includes(q);
 
       const matchesCategory =
-        category === "All" ||
-        project.category === category;
+        selectedCategory === "All" ||
+        project.category === selectedCategory;
 
-      return matchesSearch && matchesCategory;
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        !project.featured
+      );
     });
-  }, [projects, search, category]);
+  }, [projects, search, selectedCategory]);
 
-  const stats = {
-    projects: projects.length,
-    builders: new Set(
-      projects.map((p) => p.builder).filter(Boolean)
-    ).size,
+  const totalProjects = projects.length;
 
-    likes: projects.reduce(
-      (sum, p) => sum + (p.likes || 0),
-      0
-    ),
+  const totalCategories = new Set(
+    projects.map((p) => p.category).filter(Boolean)
+  ).size;
 
-    views: projects.reduce(
-      (sum, p) => sum + (p.views || 0),
-      0
-    ),
-  };
+  const totalLikes = projects.reduce((sum, p) => sum + (p.likes || 0), 0);
+
+  const stats = [
+    { icon: Boxes, value: totalProjects, label: "Projects" },
+    { icon: Layers, value: totalCategories, label: "Categories" },
+    { icon: Star, value: featuredProjects.length, label: "Top Picks" },
+    { icon: Heart, value: totalLikes, label: "Total Likes" },
+  ];
 
   return (
-    <>
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-[#09090B] text-white"
+    >
       <Navbar />
 
-      <main className="min-h-screen bg-[#09090B] text-white">
-        {/* Hero Section */}
+      <Hero />
 
-<section className="relative overflow-hidden border-b border-zinc-800">
-
-  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-cyan-500/10" />
-
-  <div className="relative mx-auto max-w-7xl px-6 py-24">
-
-    <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-400">
-      <Sparkles size={16} />
-      Ritual Ecosystem Directory
-    </span>
-
-    <h1 className="mt-8 max-w-6xl text-7xl font-black leading-tight">
-  Discover Everything
-  <span className="text-emerald-400">
-    {" "}Built on Ritual
-  </span>
-</h1>
-
-    <p className="mt-6 max-w-3xl text-xl leading-8 text-zinc-400">
-  Explore AI agents, developer tools, infrastructure, DeFi applications, and community projects powering the Ritual ecosystem.
-</p>
-
-    <div className="relative mt-10 max-w-3xl">
-      <div className="mt-8 flex flex-wrap gap-4">
-  <a
-    href="/submit"
-    className="rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-6 py-3 font-semibold text-black transition hover:scale-105"
-  >
-    🚀 Submit Project
-  </a>
-
-  <a
-    href="#projects"
-    className="rounded-2xl border border-zinc-700 px-6 py-3 font-semibold text-white transition hover:border-emerald-500"
-  >
-    🔍 Explore Projects
-  </a>
-</div>
-
-      <Search
-        size={22}
-        className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500"
-      />
-
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search projects..."
-        className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 py-5 pl-14 pr-5 outline-none focus:border-emerald-500"
-      />
-
-    </div>
-
-    <div className="mt-14 grid gap-6 md:grid-cols-4">
-
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
-        <Boxes className="mb-4 text-emerald-400" />
-        <h2 className="text-4xl font-black">{stats.projects}</h2>
-        <p className="mt-2 text-zinc-400">Projects</p>
-      </div>
-
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
-        <Users className="mb-4 text-emerald-400" />
-        <h2 className="text-4xl font-black">{stats.builders}</h2>
-        <p className="mt-2 text-zinc-400">Builders</p>
-      </div>
-
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
-        <Heart className="mb-4 text-emerald-400" />
-        <h2 className="text-4xl font-black">{stats.likes}</h2>
-        <p className="mt-2 text-zinc-400">Likes</p>
-      </div>
-
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
-        <Eye className="mb-4 text-emerald-400" />
-        <h2 className="text-4xl font-black">{stats.views}</h2>
-        <p className="mt-2 text-zinc-400">Views</p>
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-
-{/* Featured Projects */}
-
-<section className="mx-auto max-w-7xl px-6 py-20">
-
-  <div className="mb-10">
-    <h2 className="text-4xl font-black">⭐ Featured Projects</h2>
-    <p className="mt-2 text-zinc-400">
-      Highlighted projects from the Ritual ecosystem
-    </p>
-  </div>
-
-  <div className="grid gap-8 lg:grid-cols-3">
-    {featuredProjects.map((project) => (
-      <ProjectCard
-        key={project.id}
-        project={project}
-      />
-    ))}
-  </div>
-
-</section>
-
-{/* Trending Projects */}
-
-<section className="mx-auto max-w-7xl px-6 pb-20">
-
-  <div className="mb-10">
-    <h2 className="text-4xl font-black">🔥 Trending Projects</h2>
-    <p className="mt-2 text-zinc-400">
-      Most viewed projects
-    </p>
-  </div>
-
-  <div className="grid gap-8 lg:grid-cols-3">
-    {trendingProjects.map((project) => (
-      <ProjectCard
-        key={project.id}
-        project={project}
-      />
-    ))}
-  </div>
-
-</section>
-
-{/* Latest Projects */}
-
-<section className="mx-auto max-w-7xl px-6 pb-20">
-
-  <div className="mb-10">
-    <h2 className="text-4xl font-black">🆕 Latest Projects</h2>
-    <p className="mt-2 text-zinc-400">
-      Recently submitted projects
-    </p>
-  </div>
-
-  <div className="grid gap-8 lg:grid-cols-3">
-    {latestProjects.map((project) => (
-      <ProjectCard
-        key={project.id}
-        project={project}
-      />
-    ))}
-  </div>
-
-</section>
-{/* Categories */}
-
-<section className="mx-auto max-w-7xl px-6">
-
-  <div className="mb-10 flex flex-wrap gap-3">
-
-    {categories.map((item) => (
-      <button
-        key={item}
-        onClick={() => setCategory(item)}
-        className={`rounded-full px-5 py-3 transition ${
-          category === item
-            ? "bg-emerald-500 font-semibold text-black"
-            : "border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-emerald-500"
-        }`}
-      >
-        {item}
-      </button>
-    ))}
-
-  </div>
-
-</section>
-
-{/* All Projects */}
-<section
-  id="projects"
-  className="mx-auto max-w-7xl px-6 pb-24"
->
-
-  <div className="mb-10">
-
-    <h2 className="text-4xl font-black">
-      Explore Projects
-    </h2>
-
-    <p className="mt-2 text-zinc-400">
-      Browse every project built on Ritual.
-    </p>
-
-  </div>
-
-  {loading ? (
-
-    <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-
-      {[1, 2, 3, 4, 5, 6].map((i) => (
-        <div
-          key={i}
-          className="h-[430px] animate-pulse rounded-3xl bg-zinc-900"
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
         />
-      ))}
 
-    </div>
+        <div className="mb-10 mt-6 flex flex-wrap gap-3">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={[
+                "rounded-full px-5 py-2 text-sm font-semibold transition",
+                selectedCategory === category
+                  ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/25"
+                  : "border border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-emerald-500 hover:text-white",
+              ].join(" ")}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
 
-  ) : filteredProjects.length === 0 ? (
+        {/* Stats */}
+        <div className="mb-16 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+          {stats.map((stat) => {
+            const Icon = stat.icon;
 
-    <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-16 text-center">
+            return (
+              <motion.div
+                whileHover={{ y: -5 }}
+                key={stat.label}
+                className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-emerald-500"
+              >
+                <Icon size={24} className="mb-3 text-emerald-400" />
+                <h2 className="text-4xl font-black text-emerald-400">
+                  {stat.value}
+                </h2>
+                <p className="mt-2 text-zinc-400">{stat.label}</p>
+              </motion.div>
+            );
+          })}
+        </div>
 
-      <h3 className="text-3xl font-bold">
-        No projects found
-      </h3>
+        {/* Categories */}
+        <section className="mb-20">
+          <h2 className="mb-8 text-3xl font-black sm:text-4xl">
+            Browse by Category
+          </h2>
 
-      <p className="mt-4 text-zinc-400">
-        Try another search or category.
-      </p>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+            {categories
+              .filter((category) => category !== "All")
+              .map((category) => (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center font-semibold transition hover:border-emerald-400 hover:bg-zinc-800"
+                >
+                  {category}
+                </motion.button>
+              ))}
+          </div>
+        </section>
 
-    </div>
+        {/* Top Builders */}
+        <section className="mb-20">
+          <div className="mb-8">
+            <p className="flex items-center gap-2 font-bold uppercase tracking-widest text-emerald-400">
+              <Users size={16} />
+              Top Builders
+            </p>
 
-  ) : (
+            <h2 className="mt-1 text-3xl font-black sm:text-4xl">
+              Top Builders
+            </h2>
+          </div>
 
-    <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {builders.map((builder) => (
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                key={builder.name}
+              >
+                <Link
+                  to={`/builder/${encodeURIComponent(builder.name)}`}
+                  className="block h-full rounded-2xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-emerald-400 hover:bg-zinc-800"
+                >
+                  <h3 className="text-2xl font-bold">{builder.name}</h3>
 
-      {filteredProjects.map((project) => (
-        <ProjectCard
-          key={project.id}
-          project={project}
-        />
-      ))}
+                  <p className="mt-2 text-zinc-400">
+                    {builder.projects} Project{builder.projects !== 1 ? "s" : ""}
+                  </p>
 
-    </div>
+                  <div className="mt-4 flex gap-6 text-sm text-zinc-500">
+                    <span className="flex items-center gap-1.5">
+                      <Heart size={16} className="text-red-400" />
+                      {builder.likes}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Eye size={16} className="text-cyan-400" />
+                      {builder.views}
+                    </span>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </section>
 
-  )}
+        {/* Projects */}
+        <section id="projects" className="pb-20">
+          {featuredProjects.length > 0 && (
+            <>
+              <div className="mb-12">
+                <p className="flex items-center gap-2 font-bold uppercase tracking-widest text-emerald-400">
+                  <Flame size={16} />
+                  Trending
+                </p>
 
-</section>
+                <h2 className="mt-1 text-3xl font-black sm:text-5xl">
+                  Trending Projects
+                </h2>
 
-</main>
+                <p className="mt-3 max-w-xl text-zinc-400">
+                  Most loved projects in the Ritual ecosystem.
+                </p>
+              </div>
 
-<Footer />
+              <div className="mb-20 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {featuredProjects.map((project) => (
+                  <motion.div
+                    whileHover={{ y: -10 }}
+                    key={`featured-${project.id}`}
+                  >
+                    <ProjectCard
+                      project={project}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </>
+          )}
 
-</>
-);
+          <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-3xl font-bold sm:text-4xl">
+              Explore Ritual Ecosystem
+            </h2>
+
+            <span className="text-sm text-zinc-500">
+              {filteredProjects.length} Project
+              {filteredProjects.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {loading ? (
+            <LoadingCards />
+          ) : filteredProjects.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-zinc-700 py-20 text-center">
+              <SearchX size={48} className="mx-auto text-zinc-600" />
+              <h3 className="mt-6 text-2xl font-bold">No Projects Found</h3>
+
+              <p className="mt-3 text-zinc-500">
+                Try another search or category.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {filteredProjects.map((project) => (
+                <motion.div
+                  whileHover={{ y: -10 }}
+                  key={project.id}
+                >
+                  <ProjectCard
+                    project={project}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )
+          }
+        </section>
+      </div>
+
+      <Footer />
+    </motion.div>
+  );
 }

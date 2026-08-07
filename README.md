@@ -1,77 +1,68 @@
-# Ritual Agent Hub
+# 🚀 Ritual Agent Hub
 
-A community-driven ecosystem directory for discovering, showcasing, and exploring projects built on the Ritual ecosystem.
+Discover, showcase, and explore AI agents, developer tools, infrastructure, and ecosystem projects built on Ritual.
 
----
-
-## Overview
-
-Ritual Agent Hub helps developers and users discover AI projects, autonomous agents, infrastructure, developer tools, and applications built on Ritual.
-
-Instead of searching across multiple platforms, everything is available in one place.
+![React](https://img.shields.io/badge/React-19-blue)
+![Vite](https://img.shields.io/badge/Vite-7-purple)
+![Tailwind](https://img.shields.io/badge/TailwindCSS-4-38BDF8)
+![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
-## Features
+## 🌟 Overview
 
-- User Authentication
-- Submit New Projects
-- Admin Approval Workflow
-- Featured Projects
-- Project Categories
-- Search Projects
-- Project Details Page
-- Personal Dashboard
-- Admin Dashboard
-- Responsive Design
+Ritual Agent Hub is a community-powered platform where builders can showcase their projects and users can discover everything being built on the Ritual ecosystem.
+
+Whether it's AI agents, developer tools, infrastructure, or DeFi projects, Ritual Agent Hub brings them together in one place.
 
 ---
 
-## Tech Stack
+## ✨ Features
 
-Frontend
+- 🔐 Authentication
+- 📦 Submit Projects
+- ✏️ Edit Projects
+- 🗑 Delete Projects
+- ❤️ Like Projects
+- 👀 View Counter
+- 🔎 Search Projects
+- 🏷 Category Filters
+- ⭐ Featured Projects
+- 🔥 Trending Projects
+- 🆕 Latest Projects
+- 📱 Responsive Design
+
+---
+
+## 🛠 Tech Stack
+
 - React
 - Vite
 - Tailwind CSS
-
-Backend
 - Supabase
-
-Authentication
-- Supabase Auth
-
-Database
-- Supabase PostgreSQL
-
-Icons
+- React Router
 - Lucide React
-
-Deployment
 - Vercel
 
 ---
 
-## Screenshots
+## 📸 Screenshots
 
-(Add screenshots after deployment)
-
----
-
-## Future Roadmap
-
-- Image Uploads
-- Builder Profiles
-- Project Analytics
-- Project Reviews
-- AI Project Recommendations
-- API Access
+_Add screenshots here before submitting._
 
 ---
 
-## Local Setup
+## 🚀 Live Demo
+
+https://ritual-agent-hub-v2-blush.vercel.app/
+
+---
+
+## 💻 Installation
 
 ```bash
-git clone <repository-url>
+git clone YOUR_REPOSITORY_URL
 
 cd ritual-agent-hub
 
@@ -82,12 +73,28 @@ npm run dev
 
 ---
 
-## Why Ritual Agent Hub?
+## 📁 Project Structure
 
-As the Ritual ecosystem grows, discovering quality projects becomes increasingly difficult.
-
-Ritual Agent Hub provides a single platform where builders can showcase their work and users can easily explore the ecosystem.
+```
+src/
+ ├── components/
+ ├── pages/
+ ├── services/
+ ├── assets/
+ └── App.jsx
+```
 
 ---
 
-Built with ❤️ for the Ritual Ecosystem.
+## 🎯 Future Improvements
+
+- AI-powered search
+- Builder profiles
+- Favorites
+- Analytics dashboard
+- Project ratings
+- Notifications
+
+---
+
+## ❤️ Built for the Ritual Ecosystem

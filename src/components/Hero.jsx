@@ -68,7 +68,7 @@ export default function Hero() {
         }}
       />
 
-      <div className="relative mx-auto flex min-h-screen max-w-7xl items-center px-6">
+      <div className="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-7xl items-center px-4 py-20 sm:px-6">
 
         <div className="grid w-full items-center gap-16 lg:grid-cols-2">
 
@@ -94,7 +94,7 @@ export default function Hero() {
 
             </div>
 
-            <h1 className="text-6xl font-black leading-tight text-white xl:text-8xl">
+            <h1 className="text-5xl font-black leading-tight text-white sm:text-6xl xl:text-8xl">
 
               Discover
 
