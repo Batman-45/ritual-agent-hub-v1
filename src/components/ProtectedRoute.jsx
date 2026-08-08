@@ -16,6 +16,9 @@ export default function ProtectedRoute({ children }) {
       } = await supabase.auth.getSession();
 
       const currentUser = session?.user;
+      console.log("DIAGNOSTIC: Current User Email:", currentUser?.email);
+      console.log("DIAGNOSTIC: Configured ADMIN_EMAIL:", ADMIN_EMAIL);
+      
       setUser(currentUser);
       setIsAdmin(currentUser?.email === ADMIN_EMAIL);
       setLoading(false);
