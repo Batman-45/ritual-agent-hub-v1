@@ -1,1 +1,1 @@
-export const ADMIN_EMAIL = 'admin@ritual.ai';
+export const ADMIN_EMAIL = 'rohitdeshmane7@gmail.com';
