@@ -6,15 +6,6 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { supabase } from "../services/supabase";
 import { uploadImage } from "../services/storage";
-
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Save, Loader2 } from "lucide-react";
-import toast from "react-hot-toast";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import { supabase } from "../services/supabase";
-import { uploadImage } from "../services/storage";
 import { ADMIN_EMAIL } from "../utils/constants";
 
 export default function EditProject() {
@@ -121,7 +112,7 @@ export default function EditProject() {
 
       if (!error) {
         toast.success("Project updated!");
-        navigate("/dashboard");
+        navigate("/admin");
       } else {
         toast.error(error.message);
       }
