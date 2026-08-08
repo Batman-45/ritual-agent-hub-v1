@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Search, LayoutDashboard, Bookmark, LogOut, Sun, Moon, Monitor } from "lucide-react";
+import { Menu, X, Search, LayoutDashboard, Bookmark, LogOut, Sun, Moon, Monitor, Shield } from "lucide-react";
 
 import logo from "../assets/ritual-logo.png";
 import { useTheme } from "../context/ThemeContext";
+import { ADMIN_EMAIL } from "../utils/constants";
 
 import { signOut, getCurrentUser } from "../services/supabase";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { theme, setTheme } = useTheme();
 
@@ -24,6 +26,7 @@ export default function Navbar() {
   async function loadUser() {
     const currentUser = await getCurrentUser();
     setUser(currentUser);
+    setIsAdmin(currentUser?.email === ADMIN_EMAIL);
   }
 
   async function handleLogout() {
@@ -38,6 +41,7 @@ export default function Navbar() {
     { name: "Leaderboard", href: "/leaderboard" },
     { name: "Analytics", href: "/analytics" },
     { name: "Bookmarks", href: "/bookmarks" },
+    ...(isAdmin ? [{ name: "Admin", href: "/admin" }] : []),
   ];
 
   const avatar =
