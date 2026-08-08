@@ -69,30 +69,33 @@ export default function Admin() {
             </div>
           ) : (
             <div className="space-y-4">
-              {projects.map((project) => (
-                <div
-                  key={project.id}
-                  className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-emerald-500"
-                >
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold">{project.name}</h2>
-                    <Link
-                      to={`/edit/${project.id}`}
-                      className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-400"
-                    >
-                      Edit
-                    </Link>
-                  </div>
+              {projects.map((project) => {
+                console.log("Admin rendering project:", project.name);
+                return (
+                  <div
+                    key={project.id}
+                    className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-emerald-500"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-bold">{project.name}</h2>
+                      <Link
+                        to={`/edit/${project.id}`}
+                        className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-400"
+                      >
+                        Edit
+                      </Link>
+                    </div>
 
-                  <div className="mt-2 flex flex-wrap gap-4 text-sm text-zinc-400">
-                    <span>{project.builder}</span>
-                    <span className="text-zinc-600">•</span>
-                    <span>{project.category}</span>
-                    <span className="text-zinc-600">•</span>
-                    <span>{project.status}</span>
+                    <div className="mt-2 flex flex-wrap gap-4 text-sm text-zinc-400">
+                      <span>{project.builder}</span>
+                      <span className="text-zinc-600">•</span>
+                      <span>{project.category}</span>
+                      <span className="text-zinc-600">•</span>
+                      <span>{project.status}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
