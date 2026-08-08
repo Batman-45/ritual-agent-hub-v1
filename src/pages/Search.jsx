@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
-import { Search as SearchIcon, Loader2, SearchX, TrendingUp, Clock, Tag, User } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Search as SearchIcon, Loader2, SearchX, TrendingUp, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -7,54 +8,90 @@ import ProjectCard from "../components/ProjectCard";
 import { supabase } from "../services/supabase";
 
 export default function SearchPage() {
-  const [query, setQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get("q") || "");
   const [projects, setProjects] = useState([]);
+  const [userInteractions, setUserInteractions] = useState({ likes: new Set(), bookmarks: new Set() });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [recentSearches, setRecentSearches] = useState(["AI Agent", "DeFi", "Web3"]);
-  const [trendingSearches] = useState(["Autonomous", "Scaling", "Neural"]);
+  
+  const debounceTimer = useRef(null);
+  const abortController = useRef(null);
 
   useEffect(() => {
-    searchProjects();
-  }, []);
+    const q = searchParams.get("q") || "";
+    setQuery(q);
+    searchProjects(q);
+  }, [searchParams]);
 
   async function searchProjects(search = "") {
+    if (abortController.current) {
+      abortController.current.abort();
+    }
+    abortController.current = new AbortController();
+
     setLoading(true);
     setError(null);
+    console.log("SEARCH QUERY:", search);
+    console.time("SEARCH_REQUEST");
 
-    let request = supabase
-      .from("Projects")
-      .select("*")
-      .eq("status", "Active");
+    // Fetch projects and interactions concurrently
+    const [projectsRes, userRes] = await Promise.all([
+      (async () => {
+        let request = supabase
+          .from("Projects")
+          .select("id, name, builder, category, tags, likes, views, featured, verified, logo, image, website")
+          .eq("status", "Active");
 
-    if (search.trim()) {
-      request = request.or(
-        `name.ilike.%${search}%,builder.ilike.%${search}%,category.ilike.%${search}%,tags.ilike.%${search}%`
-      );
-    }
+        if (search.trim()) {
+          request = request.or(
+            `name.ilike.%${search}%,builder.ilike.%${search}%,category.ilike.%${search}%`
+          );
+        }
+        return await request.order("likes", { ascending: false }).abortSignal(abortController.current.signal);
+      })(),
+      (async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { data: { likes: [], bookmarks: [] } };
 
-    const { data, error } = await request.order("likes", {
-      ascending: false,
-    });
+        const [likes, bookmarks] = await Promise.all([
+          supabase.from("Likes").select("project_id").eq("user_id", user.id),
+          supabase.from("Bookmarks").select("project_id").eq("user_id", user.id)
+        ]);
 
-    if (error) {
-      console.error(error);
-      setError("Failed to search projects. Please try again.");
-      setLoading(false);
+        return { data: { 
+          likes: likes.data?.map(l => l.project_id) || [], 
+          bookmarks: bookmarks.data?.map(b => b.project_id) || [] 
+        }};
+      })()
+    ]);
+
+    console.timeEnd("SEARCH_REQUEST");
+
+    if (projectsRes.error) {
+      if (projectsRes.error.name !== 'AbortError') {
+        console.error(projectsRes.error);
+        setError("Failed to search projects. Please try again.");
+        setLoading(false);
+      }
       return;
     }
 
-    setProjects(data || []);
+    setProjects(projectsRes.data || []);
+    setUserInteractions({
+      likes: new Set(userRes.data.likes),
+      bookmarks: new Set(userRes.data.bookmarks)
+    });
     setLoading(false);
-    
-    if (search.trim() && !recentSearches.includes(search)) {
-      setRecentSearches(prev => [search, ...prev.slice(0, 4)]);
-    }
   }
 
-  const handleSearch = (q) => {
+  const handleSearchChange = (q) => {
     setQuery(q);
-    searchProjects(q);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    
+    debounceTimer.current = setTimeout(() => {
+      setSearchParams({ q });
+    }, 300);
   };
 
   return (
@@ -86,23 +123,11 @@ export default function SearchPage() {
 
               <input
                 type="text"
-                placeholder="Search by project, builder, category or tag..."
+                placeholder="Search by project, builder, or category..."
                 value={query}
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full rounded-3xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-xl py-6 pl-16 pr-8 text-xl text-white placeholder:text-zinc-500 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
               />
-            </div>
-            
-            {/* Quick Filters/Recent Searches */}
-            <div className="mt-8 flex flex-wrap gap-4 items-center">
-              <div className="flex items-center gap-2 text-zinc-400"><Clock size={16}/> Recent:</div>
-              {recentSearches.map(s => (
-                <button key={s} onClick={() => handleSearch(s)} className="rounded-full bg-zinc-800 px-4 py-1.5 text-sm hover:bg-zinc-700 transition">{s}</button>
-              ))}
-              <div className="flex items-center gap-2 text-zinc-400 ml-4"><TrendingUp size={16}/> Trending:</div>
-              {trendingSearches.map(s => (
-                <button key={s} onClick={() => handleSearch(s)} className="rounded-full bg-emerald-500/10 text-emerald-400 px-4 py-1.5 text-sm hover:bg-emerald-500/20 transition">{s}</button>
-              ))}
             </div>
           </motion.div>
 
@@ -142,6 +167,8 @@ export default function SearchPage() {
                   <ProjectCard
                     key={project.id}
                     project={project}
+                    isLikedInitial={userInteractions.likes.has(project.id)}
+                    isBookmarkedInitial={userInteractions.bookmarks.has(project.id)}
                   />
                 ))}
               </motion.div>

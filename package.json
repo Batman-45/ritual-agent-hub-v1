@@ -10,16 +10,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.111.0",
+    "@supabase/supabase-js": "^2.112.2",
     "cmdk": "^1.1.1",
+    "dotenv": "^17.4.2",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.29.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-helmet-async": "^3.0.0",
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.7.0",
     "react-router-dom": "^7.18.2",
-    "recharts": "^3.10.0"
+    "recharts": "^3.10.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

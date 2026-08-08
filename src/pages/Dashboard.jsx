@@ -12,8 +12,6 @@ import {
   ExternalLink,
   Loader2,
   LayoutGrid,
-  Clock,
-  Bell
 } from "lucide-react";
 
 import toast from "react-hot-toast";
@@ -31,14 +29,14 @@ export default function Dashboard() {
     bookmarks: 0,
   });
 
-  const [myProjects, setMyProjects] = useState([]);
+  const [allProjects, setAllProjects] = useState([]);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    loadDashboard();
+    loadAdminDashboard();
   }, []);
 
-  async function loadDashboard() {
+  async function loadAdminDashboard() {
     setLoading(true);
 
     const {
@@ -51,20 +49,19 @@ export default function Dashboard() {
     }
     setUser(currentUser);
 
-    // Load my projects
+    // Load ALL projects for admin view
     const { data: projectData } = await supabase
       .from("Projects")
       .select("*")
-      .eq("owner_id", currentUser.id);
+      .order("created_at", { ascending: false });
 
-    // Load my bookmarks
+    // Load ALL bookmarks
     const { data: bookmarks } = await supabase
       .from("Bookmarks")
-      .select("*")
-      .eq("user_id", currentUser.id);
+      .select("*");
 
     const projects = projectData || [];
-    setMyProjects(projects);
+    setAllProjects(projects);
 
     setStats({
       projects: projects.length,
@@ -77,23 +74,7 @@ export default function Dashboard() {
   }
 
   async function deleteProject(id) {
-    if (!window.confirm("Delete this project?")) return;
-
-    const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-    // Verify ownership before attempting deletion
-    const { data: project } = await supabase
-      .from("Projects")
-      .select("owner_id")
-      .eq("id", id)
-      .single();
-    
-    if (project?.owner_id !== user?.id) {
-        toast.error("You are not authorized to delete this project.");
-        return;
-    }
+    if (!window.confirm("Delete this project from the ecosystem?")) return;
 
     const { error } = await supabase
       .from("Projects")
@@ -102,7 +83,7 @@ export default function Dashboard() {
 
     if (!error) {
       toast.success("Project deleted.");
-      loadDashboard();
+      loadAdminDashboard();
     } else {
       toast.error(error.message);
     }
@@ -115,7 +96,7 @@ export default function Dashboard() {
         <main className="flex min-h-screen items-center justify-center bg-[#09090B] text-white">
           <div className="flex flex-col items-center gap-4">
             <Loader2 size={40} className="animate-spin text-emerald-400" />
-            <p className="text-zinc-400">Loading dashboard...</p>
+            <p className="text-zinc-400">Loading Admin CMS...</p>
           </div>
         </main>
       </>
@@ -123,10 +104,10 @@ export default function Dashboard() {
   }
 
   const statCards = [
-    { icon: Boxes, value: stats.projects, label: "Projects", color: "text-emerald-400" },
+    { icon: Boxes, value: stats.projects, label: "Total Projects", color: "text-emerald-400" },
     { icon: Heart, value: stats.likes, label: "Total Likes", color: "text-pink-400" },
     { icon: Eye, value: stats.views, label: "Total Views", color: "text-cyan-400" },
-    { icon: Bookmark, value: stats.bookmarks, label: "Saved Items", color: "text-yellow-400" },
+    { icon: Bookmark, value: stats.bookmarks, label: "Total Bookmarks", color: "text-yellow-400" },
   ];
 
   return (
@@ -137,10 +118,10 @@ export default function Dashboard() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="min-h-screen bg-[#09090B] px-4 py-12 text-white sm:px-6"
+        className="min-h-screen w-full bg-[#09090B] px-4 py-12 text-white sm:px-6"
       >
         <div className="mx-auto max-w-7xl">
-          {/* Hero */}
+          {/* Admin Hero */}
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -148,16 +129,16 @@ export default function Dashboard() {
           >
             <div>
               <h1 className="text-4xl font-black sm:text-5xl">
-                Welcome back, <span className="text-emerald-400">{user?.user_metadata?.user_name || "Builder"}</span>
+                Admin CMS
               </h1>
-              <p className="mt-3 text-zinc-400">Here's what's happening with your projects.</p>
+              <p className="mt-3 text-zinc-400">Manage the Ritual ecosystem projects.</p>
             </div>
             <Link
               to="/submit"
               className="hidden sm:inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 font-semibold text-black transition hover:bg-emerald-400 shadow-lg shadow-emerald-500/20"
             >
               <Plus size={18} />
-              Submit Project
+              Add Project
             </Link>
           </motion.div>
 
@@ -178,7 +159,7 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Projects Table/List */}
+          {/* CMS Projects Management */}
           <motion.div 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -188,27 +169,20 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-8">
                 <h2 className="text-3xl font-bold flex items-center gap-3">
                     <LayoutGrid size={28} className="text-emerald-400"/>
-                    My Projects
+                    Manage Projects
                 </h2>
             </div>
 
-            {myProjects.length === 0 ? (
+            {allProjects.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-zinc-700 py-16 text-center">
                 <Boxes size={48} className="mx-auto text-zinc-600" />
                 <p className="mt-6 text-lg text-zinc-400">
-                  You haven't submitted any projects yet.
+                  No projects found in the ecosystem.
                 </p>
-                <Link
-                  to="/submit"
-                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-black transition hover:bg-emerald-400"
-                >
-                  <Plus size={18} />
-                  Submit Your First Project
-                </Link>
               </div>
             ) : (
               <div className="space-y-4">
-                {myProjects.map((project) => (
+                {allProjects.map((project) => (
                   <div
                     key={project.id}
                     className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-zinc-800/40 p-5 transition hover:border-emerald-500/50 sm:flex-row sm:items-center sm:justify-between"
@@ -219,21 +193,11 @@ export default function Dashboard() {
                         </div>
                         <div>
                             <h3 className="text-lg font-semibold">{project.name}</h3>
-                            <p className="text-zinc-500 text-sm">{project.category}</p>
+                            <p className="text-zinc-500 text-sm">Builder: {project.builder || 'N/A'} | Category: {project.category}</p>
                         </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className="flex items-center gap-1.5 text-sm text-zinc-400 bg-zinc-900 px-3 py-1 rounded-lg">
-                        <Heart size={16} className="text-red-400" />
-                        {project.likes || 0}
-                      </span>
-
-                      <span className="flex items-center gap-1.5 text-sm text-zinc-400 bg-zinc-900 px-3 py-1 rounded-lg">
-                        <Eye size={16} className="text-cyan-400" />
-                        {project.views || 0}
-                      </span>
-
                       <Link
                         to={`/project/${project.id}`}
                         className="flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 py-2 text-sm font-semibold hover:bg-zinc-700 transition"

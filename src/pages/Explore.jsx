@@ -28,16 +28,22 @@ export default function Explore() {
 
   const [visible, setVisible] = useState(9);
 
-  const categories = [
-    "All",
-    "AI",
-    "Agent",
-    "Infrastructure",
-    "Developer Tools",
-    "Gaming",
-    "DeFi",
-    "Security",
-  ];
+  const categoryCounts = useMemo(() => {
+    const counts = { All: projects.length };
+    projects.forEach((p) => {
+      const cat = p.category || "Uncategorized";
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    return counts;
+  }, [projects]);
+
+  const categories = useMemo(() => {
+    return Object.keys(categoryCounts).sort((a, b) => {
+      if (a === "All") return -1;
+      if (b === "All") return 1;
+      return a.localeCompare(b);
+    });
+  }, [categoryCounts]);
 
   useEffect(() => {
     loadProjects();
@@ -189,7 +195,7 @@ export default function Explore() {
                       : "border border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-emerald-500 hover:text-white"
                   }`}
                 >
-                  {item}
+                  {item} ({categoryCounts[item]})
                 </button>
               ))}
             </div>

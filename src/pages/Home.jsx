@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Users, Flame, Heart, Eye, Boxes, Layers, Star, SearchX } from "lucide-react";
 import { motion } from "framer-motion";
@@ -12,11 +12,14 @@ import LoadingCards from "../components/LoadingCards";
 import Footer from "../components/Footer";
 
 export default function Home() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [builders, setBuilders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [liveStats, setLiveStats] = useState({ totalProjects: 0, totalLikes: 0, totalViews: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     loadProjects();
@@ -24,6 +27,7 @@ export default function Home() {
 
   async function loadProjects() {
     setLoading(true);
+    setStatsLoading(true);
 
     const { data, error } = await supabase
       .from("Projects")
@@ -34,23 +38,23 @@ export default function Home() {
     if (error) {
       console.error(error);
       setProjects([]);
+      setStatsLoading(false);
     } else {
       setProjects(data || []);
 
-      const stats = {};
+      // Calculate stats
+      const totalProjects = data.length;
+      const totalLikes = data.reduce((sum, p) => sum + (p.likes || 0), 0);
+      const totalViews = data.reduce((sum, p) => sum + (p.views || 0), 0);
+      setLiveStats({ totalProjects, totalLikes, totalViews });
+      setStatsLoading(false);
 
+      const stats = {};
       (data || []).forEach((project) => {
         const name = project.builder || "Unknown";
-
         if (!stats[name]) {
-          stats[name] = {
-            name,
-            projects: 0,
-            likes: 0,
-            views: 0,
-          };
+          stats[name] = { name, projects: 0, likes: 0, views: 0 };
         }
-
         stats[name].projects += 1;
         stats[name].likes += project.likes || 0;
         stats[name].views += project.views || 0;
@@ -78,12 +82,7 @@ export default function Home() {
   }, [projects]);
 
   const featuredProjects = projects.filter((p) => p.featured);
-const recentProjects = [...projects]
-  .sort(
-    (a, b) =>
-      new Date(b.created_at) - new Date(a.created_at)
-  )
-  .slice(0, 6);
+  
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
       const q = search.toLowerCase();
@@ -106,19 +105,11 @@ const recentProjects = [...projects]
     });
   }, [projects, search, selectedCategory]);
 
-  const totalProjects = projects.length;
-
-  const totalCategories = new Set(
-    projects.map((p) => p.category).filter(Boolean)
-  ).size;
-
-  const totalLikes = projects.reduce((sum, p) => sum + (p.likes || 0), 0);
-
   const stats = [
-    { icon: Boxes, value: totalProjects, label: "Projects" },
-    { icon: Layers, value: totalCategories, label: "Categories" },
+    { icon: Boxes, value: statsLoading ? "..." : liveStats.totalProjects, label: "Projects" },
+    { icon: Eye, value: statsLoading ? "..." : liveStats.totalViews, label: "Total Views" },
     { icon: Star, value: featuredProjects.length, label: "Top Picks" },
-    { icon: Heart, value: totalLikes, label: "Total Likes" },
+    { icon: Heart, value: statsLoading ? "..." : liveStats.totalLikes, label: "Total Likes" },
   ];
 
   return (
@@ -136,6 +127,11 @@ const recentProjects = [...projects]
         <SearchBar
           value={search}
           onChange={setSearch}
+          onSearch={(query) => {
+            if (!query.trim()) return;
+            console.log("SEARCH SUBMITTED:", query);
+            navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+          }}
         />
 
         <div className="mb-10 mt-6 flex flex-wrap gap-3">
@@ -164,7 +160,7 @@ const recentProjects = [...projects]
               <motion.div
                 whileHover={{ y: -5 }}
                 key={stat.label}
-                className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-emerald-500"
+                className="flex flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center transition hover:border-emerald-500"
               >
                 <Icon size={24} className="mb-3 text-emerald-400" />
                 <h2 className="text-4xl font-black text-emerald-400">

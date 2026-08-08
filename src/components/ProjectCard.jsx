@@ -23,25 +23,22 @@ function formatNumber(num = 0) {
   return num.toString();
 }
 
-export default function ProjectCard({ project, onEdit, onDelete }) {
+export default function ProjectCard({ project, onEdit, onDelete, isLikedInitial = false, isBookmarkedInitial = false }) {
  
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(isBookmarkedInitial);
   const navigate = useNavigate();
+  
+  const [likes, setLikes] = useState(project.likes || 0);
+  const [loading, setLoading] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+  const [bannerError, setBannerError] = useState(false);
+  const [isLiked, setIsLiked] = useState(isLikedInitial);
 
+  // Sync state if props change (e.g. if parent refreshes interaction data)
   useEffect(() => {
-    async function checkBookmark() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from("Bookmarks")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("project_id", project.id)
-        .maybeSingle();
-      setSaved(!!data);
-    }
-    checkBookmark();
-  }, [project.id]);
+    setSaved(isBookmarkedInitial);
+    setIsLiked(isLikedInitial);
+  }, [isBookmarkedInitial, isLikedInitial]);
 
   async function toggleBookmark() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -77,48 +74,6 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
       }
     }
   }
-
-  const [likes, setLikes] = useState(project.likes || 0);
-  const [loading, setLoading] = useState(false);
-  const [logoError, setLogoError] = useState(false);
-  const [bannerError, setBannerError] = useState(false);
-
-  const initials = useMemo(() => {
-    return (project.name || "Project")
-      .split(" ")
-      .map((w) => w[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  }, [project.name]);
-
-  const tags = useMemo(() => {
-    if (!project.tags) return [];
-    if (Array.isArray(project.tags)) return project.tags;
-
-    return project.tags
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean);
-  }, [project.tags]);
-
-  const [isLiked, setIsLiked] = useState(false);
-
-  useEffect(() => {
-    async function checkLike() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from("Likes")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("project_id", project.id)
-        .maybeSingle();
-      setIsLiked(!!data);
-    }
-    checkLike();
-  }, [project.id]);
-
   async function handleLike(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -180,10 +135,21 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
     }
   }
 
+  const tags = useMemo(() => {
+    if (!project.tags) return [];
+    if (Array.isArray(project.tags)) return project.tags;
+
+    return typeof project.tags === 'string'
+      ? project.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+      : [];
+  }, [project.tags]);
+
+  const initials = (project.name || "PR").substring(0, 2).toUpperCase();
+
   const badges = useMemo(() => getBuilderBadges({
-    likes: project.likes,
+    likes: project.likes || 0,
     projects: [project],
-    is_verified: project.verified
+    is_verified: project.verified || false
   }), [project]);
 
   return (
@@ -281,7 +247,7 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
           </div>
         </div>
 
-        <p className="mt-5 line-clamp-3 text-sm leading-7 text-zinc-400">
+        <p className={`mt-5 line-clamp-3 text-sm leading-7 text-zinc-400 ${!project.description ? 'hidden' : ''}`}>
           {project.description}
         </p>
 
@@ -355,7 +321,7 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
               </a>
             )}
 
-            {project.github && (
+            {project.github && project.github.trim().length > 0 && (
               <a
                 href={project.github}
                 target="_blank"
@@ -367,7 +333,7 @@ export default function ProjectCard({ project, onEdit, onDelete }) {
               </a>
             )}
 
-            {project.discord && (
+            {project.discord && project.discord.trim().length > 0 && (
               <a
                 href={project.discord}
                 target="_blank"

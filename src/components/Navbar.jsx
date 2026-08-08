@@ -37,6 +37,7 @@ export default function Navbar() {
     { name: "Builders", href: "/builders" },
     { name: "Leaderboard", href: "/leaderboard" },
     { name: "Analytics", href: "/analytics" },
+    { name: "Bookmarks", href: "/bookmarks" },
   ];
 
   const avatar =
@@ -58,7 +59,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-300 border-b ${isScrolled ? "bg-[#09090B]/80 backdrop-blur-md border-zinc-800" : "bg-transparent border-transparent"}`}>
+    <header className={`sticky top-0 z-50 transition-all duration-300 border-b ${isScrolled ? "bg-[#09090B]/80 backdrop-blur-md border-zinc-800" : "bg-[#09090B] border-transparent"}`}>
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
@@ -118,13 +119,6 @@ export default function Navbar() {
               </button>
 
               <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-zinc-800 bg-zinc-900 p-2 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition">
-                <Link
-                  to="/dashboard"
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
-                >
-                  <LayoutDashboard size={18} className="text-emerald-400" />
-                  Dashboard
-                </Link>
                 <Link
                   to="/bookmarks"
                   className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
@@ -205,14 +199,6 @@ export default function Navbar() {
                     </div>
                   </div>
 
-                  <Link
-                    to="/dashboard"
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
-                  >
-                    <LayoutDashboard size={18} className="text-emerald-400" />
-                    Dashboard
-                  </Link>
                   <Link
                     to="/bookmarks"
                     onClick={() => setOpen(false)}

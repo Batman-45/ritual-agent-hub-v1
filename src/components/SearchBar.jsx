@@ -8,21 +8,28 @@ const categories = [
   "Gaming",
   "Developer Tool",
 ];
-
 export default function SearchBar({
   value,
   onChange,
+  onSearch = () => {},
   category = "All",
   onCategoryChange = () => {},
 }) {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSearch(value);
+  };
+
   return (
-    <div className="space-y-6">
+    <form className="space-y-6" onSubmit={handleSubmit}>
       {/* Search */}
       <div className="relative">
-        <Search
-          size={20}
-          className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500"
-        />
+        <button
+          type="submit"
+          className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500 cursor-pointer"
+        >
+          <Search size={20} />
+        </button>
 
         <input
           value={value}
@@ -50,6 +57,7 @@ export default function SearchBar({
 
         {value && (
           <button
+            type="button"
             onClick={() => onChange("")}
             className="absolute right-4 top-1/2 -translate-y-1/2 rounded-lg p-1 text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
           >
@@ -63,6 +71,7 @@ export default function SearchBar({
         {categories.map((item) => (
           <button
             key={item}
+            type="button"
             onClick={() => onCategoryChange(item)}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               category === item
@@ -74,6 +83,6 @@ export default function SearchBar({
           </button>
         ))}
       </div>
-    </div>
+    </form>
   );
 }

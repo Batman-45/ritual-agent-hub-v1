@@ -155,7 +155,7 @@ export default function ProjectDetails() {
   useEffect(() => {
     async function checkLike() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user || !project) return;
       const { data } = await supabase
         .from("Likes")
         .select("id")
@@ -381,7 +381,7 @@ export default function ProjectDetails() {
 
                 {/* External Links */}
                 <div className="mt-8 flex flex-wrap gap-4">
-                  {project.website && (
+                  {project.website && project.website.trim().length > 0 && (
                     <a
                       href={project.website}
                       target="_blank"
@@ -393,7 +393,7 @@ export default function ProjectDetails() {
                     </a>
                   )}
 
-                  {project.github && (
+                  {project.github && project.github.trim().length > 0 && (
                     <a
                       href={project.github}
                       target="_blank"
@@ -405,7 +405,7 @@ export default function ProjectDetails() {
                     </a>
                   )}
 
-                  {project.documentation && (
+                  {project.documentation && project.documentation.trim().length > 0 && (
                     <a
                       href={project.documentation}
                       target="_blank"
@@ -417,7 +417,7 @@ export default function ProjectDetails() {
                     </a>
                   )}
 
-                  {project.discord && (
+                  {project.discord && project.discord.trim().length > 0 && (
                     <a
                       href={project.discord}
                       target="_blank"
@@ -458,18 +458,20 @@ export default function ProjectDetails() {
         )}
 
         {/* About */}
-        <motion.section 
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            className="mx-auto max-w-7xl px-4 py-10 sm:px-6"
-        >
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-8 backdrop-blur-xl">
-            <h2 className="mb-6 text-3xl font-bold">About this Project</h2>
+        {project.description && project.description.trim().length > 0 && (
+          <motion.section 
+              initial={{ y: 20, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              className="mx-auto max-w-7xl px-4 py-10 sm:px-6"
+          >
+            <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-8 backdrop-blur-xl">
+              <h2 className="mb-6 text-3xl font-bold">About this Project</h2>
 
-            <p className="leading-8 text-zinc-300">{project.description}</p>
-          </div>
-        </motion.section>
+              <p className="leading-8 text-zinc-300">{project.description}</p>
+            </div>
+          </motion.section>
+        )}
 
         {/* Related Projects */}
         {relatedProjects.length > 0 && (

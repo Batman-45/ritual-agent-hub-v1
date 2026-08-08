@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
