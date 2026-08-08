@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Shield, Loader2, FolderGit2 } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Shield, Loader2, FolderGit2, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -8,6 +8,7 @@ import { supabase } from "../services/supabase";
 export default function Admin() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     loadProjects();
@@ -27,6 +28,17 @@ export default function Admin() {
     setProjects(data || []);
     setLoading(false);
   }
+
+  const filteredProjects = useMemo(() => {
+    return projects.filter((p) => {
+      const q = search.toLowerCase();
+      return (
+        p.name?.toLowerCase().includes(q) ||
+        p.builder?.toLowerCase().includes(q) ||
+        p.website?.toLowerCase().includes(q)
+      );
+    });
+  }, [projects, search]);
 
   if (loading) {
     return (
@@ -53,49 +65,63 @@ export default function Admin() {
             Admin Panel
           </h1>
 
-          <p className="mb-8 text-zinc-400">
-            Manage all projects in the Ritual ecosystem.
+          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <p className="text-zinc-400">
+              Manage all projects in the Ritual ecosystem.
+            </p>
+            
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+              <input
+                type="text"
+                placeholder="Search projects by name, builder or website..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-emerald-500"
+              />
+            </div>
+          </div>
+          
+          <p className="mb-4 text-sm text-zinc-500">
+            {filteredProjects.length} project{filteredProjects.length !== 1 ? "s" : ""} found
           </p>
 
-          {projects.length === 0 ? (
+          {filteredProjects.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-zinc-700 py-20 text-center">
               <FolderGit2 size={48} className="mx-auto text-zinc-600" />
               <p className="mt-6 text-2xl font-bold text-zinc-300">
                 No projects found
               </p>
               <p className="mt-3 text-zinc-500">
-                Projects will appear here once submitted.
+                Try a different search term.
               </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {projects.map((project) => {
-                console.log("Admin rendering project:", project.name);
-                return (
-                  <div
-                    key={project.id}
-                    className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-emerald-500"
-                  >
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-bold">{project.name}</h2>
-                      <Link
-                        to={`/edit/${project.id}`}
-                        className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-400"
-                      >
-                        Edit
-                      </Link>
-                    </div>
-
-                    <div className="mt-2 flex flex-wrap gap-4 text-sm text-zinc-400">
-                      <span>{project.builder}</span>
-                      <span className="text-zinc-600">•</span>
-                      <span>{project.category}</span>
-                      <span className="text-zinc-600">•</span>
-                      <span>{project.status}</span>
-                    </div>
+              {filteredProjects.map((project) => (
+                <div
+                  key={project.id}
+                  className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-emerald-500"
+                >
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold">{project.name}</h2>
+                    <Link
+                      to={`/edit/${project.id}`}
+                      className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-400"
+                    >
+                      Edit
+                    </Link>
                   </div>
-                );
-              })}
+
+                  <div className="mt-2 flex flex-wrap gap-4 text-sm text-zinc-400">
+                    <span>{project.builder}</span>
+                    <span className="text-zinc-600">•</span>
+                    <span>{project.category}</span>
+                    <span className="text-zinc-600">•</span>
+                    <span>{project.status}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
