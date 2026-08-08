@@ -41,7 +41,7 @@ export default function App() {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/login" element={<Login />} />
           <Route path="/builder/:builder" element={<BuilderProfile />} />
-          <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
+          <Route path="/bookmarks" element={<Bookmarks />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/project/:id" element={<ProjectDetails />} />
