@@ -7,6 +7,16 @@ import Footer from "../components/Footer";
 import { supabase } from "../services/supabase";
 import { uploadImage } from "../services/storage";
 
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Save, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import { supabase } from "../services/supabase";
+import { uploadImage } from "../services/storage";
+import { ADMIN_EMAIL } from "../utils/constants";
+
 export default function EditProject() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -40,6 +50,13 @@ export default function EditProject() {
       data: { user },
     } = await supabase.auth.getUser();
 
+    // Verify admin access (ProtectedRoute handles route-level protection, but we verify here too)
+    if (!user || user.email !== ADMIN_EMAIL) {
+        toast.error("You are not authorized to edit projects.");
+        navigate("/");
+        return;
+    }
+
     const { data, error } = await supabase
       .from("Projects")
       .select("*")
@@ -47,11 +64,6 @@ export default function EditProject() {
       .single();
 
     if (!error && data) {
-      if (user?.id !== data.owner_id) {
-        toast.error("You are not authorized to edit this project.");
-        navigate("/dashboard");
-        return;
-      }
       setForm({
         name: data.name || "",
         description: data.description || "",
@@ -66,7 +78,7 @@ export default function EditProject() {
       });
     } else {
       toast.error("Failed to load project.");
-      navigate("/dashboard");
+      navigate("/admin");
     }
 
     setLoading(false);
