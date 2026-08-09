@@ -26,7 +26,7 @@ export default function Explore() {
 
   const [view, setView] = useState("grid");
 
-  const [visible, setVisible] = useState(9);
+  const [visible, setVisible] = useState(20);
 
   const categoryCounts = useMemo(() => {
     const counts = { All: projects.length };
@@ -187,7 +187,7 @@ export default function Explore() {
                   key={item}
                   onClick={() => {
                     setCategory(item);
-                    setVisible(9);
+                    setVisible(20);
                   }}
                   className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
                     category === item
@@ -304,7 +304,7 @@ export default function Explore() {
             filteredProjects.length > visible && (
               <div className="mt-12 flex justify-center">
                 <button
-                  onClick={() => setVisible((prev) => prev + 9)}
+                  onClick={() => setVisible((prev) => prev + 20)}
                   className="rounded-2xl bg-emerald-500 px-8 py-4 font-semibold text-black transition hover:bg-emerald-400"
                 >
                   Load More
