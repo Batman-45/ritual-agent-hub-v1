@@ -85,7 +85,6 @@ export default function EditProject() {
   }
 
   async function updateProject(e) {
-    console.log("=== EDIT PROJECT SAVE START ===");
     e.preventDefault();
 
     setSaving(true);
@@ -108,19 +107,12 @@ export default function EditProject() {
         image: bannerUrl,
       };
 
-      console.log("=== SUPABASE UPDATE PAYLOAD ===", updateData);
-      console.log("Project ID:", id);
-      console.log("Logo URL:", logoUrl);
-      console.log("Banner URL:", bannerUrl);
-
       const { data, error } = await supabase
         .from("Projects")
         .update(updateData)
         .eq("id", id)
         .select()
         .single();
-
-      console.log("=== SUPABASE UPDATE RESULT ===", { data, error });
 
       if (!error) {
         toast.success("Project updated!");
