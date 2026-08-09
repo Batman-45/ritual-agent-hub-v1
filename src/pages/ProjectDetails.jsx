@@ -38,6 +38,7 @@ export default function ProjectDetails() {
   async function loadProject() {
     setLoading(true);
 
+    // Fetch primary project data
     const { data, error } = await supabase
       .from("Projects")
       .select("*")
@@ -53,39 +54,33 @@ export default function ProjectDetails() {
     setProject(data);
     setLikes(data.likes || 0);
 
-    // Increase views once
-    const viewedKey = `viewed-${data.id}`;
-
-    if (!sessionStorage.getItem(viewedKey)) {
-      const newViews = (data.views || 0) + 1;
-
-      await supabase
+    // Run secondary, independent requests in parallel
+    const [_, { data: related }, { data: { user } }] = await Promise.all([
+      // Increase views (fire-and-forget logic if needed, but keeping it inside here is okay)
+      (async () => {
+        const viewedKey = `viewed-${data.id}`;
+        if (!sessionStorage.getItem(viewedKey)) {
+          const newViews = (data.views || 0) + 1;
+          await supabase
+            .from("Projects")
+            .update({ views: newViews })
+            .eq("id", data.id);
+          setProject((prev) => ({ ...prev, views: newViews }));
+          sessionStorage.setItem(viewedKey, "true");
+        }
+      })(),
+      // Related projects
+      supabase
         .from("Projects")
-        .update({ views: newViews })
-        .eq("id", data.id);
-
-      setProject({
-        ...data,
-        views: newViews,
-      });
-
-      sessionStorage.setItem(viewedKey, "true");
-    }
-
-    // Related projects
-    const { data: related } = await supabase
-      .from("Projects")
-      .select("*")
-      .eq("category", data.category)
-      .neq("id", data.id)
-      .limit(3);
+        .select("*")
+        .eq("category", data.category)
+        .neq("id", data.id)
+        .limit(3),
+      // Check if already bookmarked
+      supabase.auth.getUser()
+    ]);
 
     setRelatedProjects(related || []);
-
-    // Check if already bookmarked
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
 
     if (user) {
       const { data: existingBookmark } = await supabase

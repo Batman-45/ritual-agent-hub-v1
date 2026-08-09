@@ -31,9 +31,10 @@ export default function Home() {
 
     const { data, error } = await supabase
       .from("Projects")
-      .select("*")
+      .select("id, name, builder, category, tags, likes, views, featured, verified, logo, image, description, website, github, discord")
       .eq("status", "Active")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(0, 19);
 
     if (error) {
       console.error(error);
@@ -297,18 +298,29 @@ export default function Home() {
               </p>
             </div>
           ) : (
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {filteredProjects.map((project) => (
-                <motion.div
-                  whileHover={{ y: -10 }}
-                  key={project.id}
+            <>
+              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {filteredProjects.map((project) => (
+                  <motion.div
+                    whileHover={{ y: -10 }}
+                    key={project.id}
+                  >
+                    <ProjectCard
+                      project={project}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+              
+              <div className="mt-12 flex justify-center">
+                <Link
+                  to="/explore"
+                  className="rounded-xl border border-zinc-700 bg-zinc-900 px-8 py-3 font-semibold text-white transition hover:border-emerald-500 hover:bg-zinc-800"
                 >
-                  <ProjectCard
-                    project={project}
-                  />
-                </motion.div>
-              ))}
-            </div>
+                  View All Projects
+                </Link>
+              </div>
+            </>
           )
           }
         </section>
