@@ -87,6 +87,8 @@ export default function EditProject() {
   async function updateProject(e) {
     e.preventDefault();
 
+    console.log("=== EDIT PROJECT SAVE START ===");
+
     setSaving(true);
 
     let logoUrl = form.logo;
@@ -101,22 +103,35 @@ export default function EditProject() {
         bannerUrl = await uploadImage(bannerFile, "project-banners");
       }
 
-      const { error } = await supabase
+      const updateData = {
+        ...form,
+        logo: logoUrl,
+        image: bannerUrl,
+      };
+
+      console.log("=== SUPABASE UPDATE PAYLOAD ===", updateData);
+      console.log("Project ID:", id);
+      console.log("Logo URL:", logoUrl);
+      console.log("Banner URL:", bannerUrl);
+
+      const { data, error } = await supabase
         .from("Projects")
-        .update({
-          ...form,
-          logo: logoUrl,
-          image: bannerUrl,
-        })
-        .eq("id", id);
+        .update(updateData)
+        .eq("id", id)
+        .select()
+        .single();
+
+      console.log("=== SUPABASE UPDATE RESULT ===", { data, error });
 
       if (!error) {
         toast.success("Project updated!");
         navigate("/admin");
       } else {
+        console.error("Update error:", error);
         toast.error(error.message);
       }
     } catch (err) {
+      console.error("Update catch error:", err);
       toast.error(err.message);
     } finally {
       setSaving(false);

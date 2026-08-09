@@ -19,12 +19,12 @@ export async function uploadImage(file, bucket) {
     throw error;
   }
 
-  console.log(`Upload successful for: ${fileName}`);
+  console.log(`Upload successful for: ${fileName}`, data);
 
   const { data: urlData } = supabase.storage
     .from(bucket)
     .getPublicUrl(fileName);
 
-  console.log(`Generated public URL:`, urlData.publicUrl);
+  console.log(`Generated public URL for ${fileName}:`, urlData.publicUrl);
   return urlData.publicUrl;
 }
