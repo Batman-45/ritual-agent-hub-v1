@@ -8,15 +8,23 @@ export async function uploadImage(file, bucket) {
     .toString(36)
     .substring(2)}.${fileExt}`;
 
-  const { error } = await supabase.storage
+  console.log(`Attempting upload to bucket: ${bucket}, file: ${fileName}`);
+
+  const { data, error } = await supabase.storage
     .from(bucket)
     .upload(fileName, file);
 
-  if (error) throw error;
+  if (error) {
+    console.error(`Storage upload error (bucket: ${bucket}):`, error);
+    throw error;
+  }
 
-  const { data } = supabase.storage
+  console.log(`Upload successful for: ${fileName}`);
+
+  const { data: urlData } = supabase.storage
     .from(bucket)
     .getPublicUrl(fileName);
 
-  return data.publicUrl;
+  console.log(`Generated public URL:`, urlData.publicUrl);
+  return urlData.publicUrl;
 }
