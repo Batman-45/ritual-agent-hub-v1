@@ -85,9 +85,8 @@ export default function EditProject() {
   }
 
   async function updateProject(e) {
-    e.preventDefault();
-
     console.log("=== EDIT PROJECT SAVE START ===");
+    e.preventDefault();
 
     setSaving(true);
 
