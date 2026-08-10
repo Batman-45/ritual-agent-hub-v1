@@ -36,6 +36,7 @@ export default function Navbar() {
 
   const navItems = [
     { name: "Home", href: "/" },
+    { name: "Mainnet", href: "/mainnet" },
     { name: "Explore", href: "/search" },
     { name: "Builders", href: "/builders" },
     { name: "Leaderboard", href: "/leaderboard" },

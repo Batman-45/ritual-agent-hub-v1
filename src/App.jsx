@@ -13,6 +13,7 @@ import BuilderProfile from "./pages/BuilderProfile";
 import Profile from "./pages/Profile";
 import ProjectDetails from "./pages/ProjectDetails";
 import EditProject from "./pages/EditProject";
+import Mainnet from "./pages/Mainnet";
 
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const Analytics = lazy(() => import("./pages/Analytics"));
@@ -33,6 +34,7 @@ export default function App() {
       }>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/mainnet" element={<Mainnet />} />
           <Route path="/search" element={<Search />} />
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="/edit/:id" element={<ProtectedRoute><EditProject /></ProtectedRoute>} />
