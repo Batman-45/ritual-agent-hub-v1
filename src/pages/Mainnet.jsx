@@ -22,13 +22,28 @@ const Mainnet = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+
+    // Auto-retry polling when there is an error
+    let interval;
+    if (error) {
+      interval = setInterval(loadData, 5000); // Poll every 5 seconds
+    }
+    return () => clearInterval(interval);
+  }, [error]);
 
   if (loading) return <div className="p-8 text-center text-zinc-400">Connecting to Ritual Network...</div>;
   if (error) return (
-    <div className="p-8 text-center text-red-500">
-        Error: {error} 
-        <button onClick={loadData} className="block mx-auto mt-4 px-4 py-2 bg-emerald-500 text-black font-semibold rounded-xl">Retry</button>
+    <div className="p-8 max-w-4xl mx-auto">
+        <div className="p-8 bg-red-950/30 border border-red-900 rounded-2xl text-center">
+            <h2 className="text-xl font-bold text-red-500 mb-2">Ritual Network Unavailable</h2>
+            <p className="text-zinc-400 mb-4">The official RPC endpoint (https://rpc.ritualfoundation.org) is temporarily unreachable.</p>
+            <div className="inline-block px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-xl text-sm text-zinc-300 mb-6">
+                Chain ID: 1979
+            </div>
+            <button onClick={loadData} className="block mx-auto px-6 py-3 bg-emerald-500 text-black font-semibold rounded-xl hover:bg-emerald-400 transition">
+                Retry Connection
+            </button>
+        </div>
     </div>
   );
 
